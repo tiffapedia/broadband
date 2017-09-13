@@ -24,6 +24,34 @@ You are given three files, Price.csv, Penetration.csv, and Speed.csv.  These con
 
 As a first step in your analysis, you should combine these files into a single data frame.  Although there is a merge function in base R, we recommend that you use the dplyr package, which contains a set of join functions.  These match the familiar terminilogy from SQL.
 
+
+```{r}
+setwd("D:/Documents/UC Berkeley MIDS/W203 Statistics/Lab 1/Lab_1/Broadband_EDA")
+#Import and Process Price CSV File
+Price = read.csv("Price.csv")
+colnames(Price) <- c('Country', 'Country_Code', 'Price_LowSpeed', 'Price_MedSpeed', 'Price_HighSpeed', 'Price_VeryHighSpeed')
+colnames(Price)
+
+#Import and Process Penetration CSV File
+Penetration = read.csv("Penetration.csv")
+#Drop the NA Column which contains no data
+Penetration <- Penetration[, 0:12]
+colnames(Penetration) <- c('Country', 'Country_Code', 'Penetration_OECD_2008', 'Penetration_OECD_2007', 'Penetration_OECD_Household', 'Penetration_OECD_2G_3G', 'Penetration_GC_Penetration', 'Penetration_3G', 'Growth_3G_Penetration', 'WiFi_Hotspots', 'Wifi_Hotspots_Per_100,000', 'Percent_Population_Urban')
+colnames(Penetration)
+
+#Import and Process Speed CSV File
+Speed = read.csv("Speed.csv")
+colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
+colnames(Speed)
+
+#Join 3 Datasets together via full join. Join via Country Code because it's more standardized than Country (Eliminate mis-spelling and/or capitalized vs not-capitalized)
+join1 = full_join(Price, Penetration, by = c("Country_Code" = "Country_Code"))
+Broadband = full_join(join1, Speed, by = c("Country_Code" = "Country_Code"))
+head(Broadband)
+colnames(Broadband)
+summary(Broadband) 
+```
+
 ```{r, eval= FALSE}
 library(dplyr)
 ?full_join
