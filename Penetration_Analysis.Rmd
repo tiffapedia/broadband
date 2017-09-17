@@ -13,10 +13,6 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r}
-setwd('/Users/arthur/Desktop')
-```
-
 # Import and Process Price CSV File
 ```{r}
 Price = read.csv("Price.csv")
@@ -27,56 +23,87 @@ colnames(Price)
 # Import and Process Penetration CSV File
 ```{r}
 Penetration = read.csv("Penetration.csv")
-#Drop the NA Column which contains no data
-Penetration <- Penetration[, 0:12]
+# Drop the NA Column and NA row which contains no data
+Penetration <- Penetration[0:30, 0:12]
 colnames(Penetration) <- c('Country', 'Country_Code', 'Penetration_OECD_2008', 'Penetration_OECD_2007', 'Penetration_OECD_Household', 'Penetration_OECD_2G_3G', 'Penetration_GC_Penetration', 'Penetration_3G', 'Growth_3G_Penetration', 'WiFi_Hotspots', 'Wifi_Hotspots_Per_100,000', 'Percent_Population_Urban')
-colnames(Penetration)
+(Penetration)
+# The penetration variable contains 30 rows (which represent counties) and 12 columns (which represent different penetration variables).
+
 ```
 # Explore Penetration variable: Use visualizations and descriptive statistics to perform a univariate analysis of each key variable.
 
 ```{r}
 summary(Penetration)
-# Looking at the summary statistics of each variable, 
+# First, wanted to look at summary statistics to see how values vary and whether it makes sense. Notes:
+# - Since Penetration_OECD_2008, Penetration_OECD_2007 and Penetration_OECD_Household are based on a per 100 inhabitants or household basis, the distribution for Penetration_OECD_2G_3G is confounding as its values range from a minimum of 62 to a maximum of 151. This is something we will look into.
+# - Growth_3G_Penetration and Percent_Population_Urban are in percent units
+# - WiFi_Hotspots values have a much higher range than all other variables.
 ```
 ```{r}
-library(car)
-boxplot(Penetration$Penetration_OECD_2008, Penetration$Penetration_OECD_Household, main = 'Penetration_OECD_2008 vs. Penetration_OECD_Household')
+# Next, we wanted to look at the relationship between values from the same time period. Since most variable years were unspecified, we assumed OECD data was mainly from 2007. 
+
+cor(Penetration[ , c("Penetration_OECD_2007", "Penetration_OECD_Household", "Penetration_OECD_2G_3G")], use = "complete.obs")
+
+#Looking at the correlation values, it looks like Penetration_OECD_Household and Penetration_OECD_2007 have a a 0.93 correlation, while the two variables have a weak linear relationship with Penetration_OECD_2G_3G variable.
 ```
-# We were interested in looking at the difference between penetration per 100 inhabitants versus penetration by household. Looking at the distribution for each boxplot,  Penetration per 100 inhabitants in 2008 has a smaller range and a lower median than Penetration per Household. Upon further reading, looking at penetration by household may be misleading since it includes some connections to businesses.
+```{r}
+# Data from GlobalComms is slightly more updated, as it is copyrighted in 2009, so we’re assuming the data shared is from 2008. We’ll compare Penetration_OECD_2008 with Penetration per 100 GC and 3G penetration per 100. 
+
+cor(Penetration[ , c("Penetration_OECD_2008", "Penetration_GC_Penetration", "Penetration_3G")], use = "complete.obs")
+
+# Looking at correlation values, it appears that Penetration_OECD_2008 and Penetration_GC_Penetration have almost a 1:1 linear relationship, which makes sense since they are measuring the same value, namely the penetration per 100 inhabitants in 2008. 
+```
+```{r}
+# Since neither Penetration_OECD_2G_3G nor Penetration_3G held a strong linear relationship with other variables, we wanted to see if the two were correlated in any way. However, it appeared there was not a strong correlation between the two variables.
+cor(Penetration[,c("Penetration_OECD_2G_3G", "Penetration_3G")])
+```
 
 ```{r}
-Negative = Penetration$Penetration_OECD_2007 > Penetration$Penetration_OECD_2008 
-NP = Penetration[Negative, ]
-NP
-```
-# We wanted to see if any country experienced negative growth between 2007 and 2008. Finland appeared to be the only country with a negative growth but upon closer inspection, the decrease was only of 0.1 per 100 inhabitants.
-
-```{r}
-boxplot(Penetration$Penetration_OECD_Household, Penetration$WiFi_Hotspots, main = 'Penetration_OECD_Household vs. WiFi_Hotspots')
+# Next, we wanted to look at the growth of 3G Penetration by country. To do so, we had to convert the percentage values into decimals. 
+Growth_3G = as.numeric(sub("%","",Penetration$Growth_3G_Penetration))/100
+Penetration$Growth_3G_Dec = Growth_3G
 ```
 
-
-# Penetration_OECD variable measures the subscriptions per 100 inhabitants
 ```{r}
-boxplot(Penetration[,3:4])
-```
-# From 2007 to 2008, there's been an overall increase in Penetration_OECD values. Top three countries with highest Penetration in 2007 were Denmark, Netherlands and Switzerland. Bottom three were Mexico, Turkey and Slovak Republic. In 2008, Denmark and Netherlands remained the top 2 while Norway replaced Switzerland among the Top 3. Mexico and Turkey remained in the bottom 3 while Poland replaced Slovak among the bottom 3.
-
-```{r}
-barplot(Penetration$Penetration_OECD_2007, names.arg=Penetration$Country, horiz=TRUE, las=1, cex.names=0.5, border=NA)
-```
-```{r}
-barplot(Penetration$Penetration_OECD_2008, names.arg=Penetration$Country
-        , horiz=TRUE, las=1, cex.names=0.5, border=NA)
-```
-```{r}
-
+barplot(Penetration$Growth_3G_Dec, names.arg=Penetration$Country, horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "Growth of 3G Penetration by Country", xlab = "Percentage in decimals")
 ```
 
-# Penetration_OECD_Household measures the subscriptions per 100 households. When looking at this variable, top three countries are Korea, Iceland and Netherlands.
 ```{r}
+Population_Urban = as.numeric(sub("%","",Penetration$Percent_Population_Urban))/100
+Penetration$Population_Urban_Dec = Population_Urban
+
+barplot(Penetration$Population_Urban_Dec, names.arg=Penetration$Country, horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "% of Pop. in Urban Areas by Country", xlab = "Percentage in decimals")
+```
+
+```{r}
+#Looking at Percent of Pop. in Urban areas, it appears that Poland has more than 100% of its population in urban areas, which must be an error. If we disregard this error in entry, Belgium, Iceland and U.K would appear to have the highest % of population in urban areas. Slovak Republic, Portugal and Greece appear to have the lowest % of pop. in urban areas. With this mind, we wondered if percentage of population in urban areas meant higher penetration. 
+
+barplot(Penetration$Penetration_OECD_2007, names.arg=Penetration$Country
+        , horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "Penetration per 100 Inhabitants by Country - 2007")
+
+# In 2007, Denmark, Netherlands and Switzerland were the top 3 countries with highest penetration, and Mexico, Turkey and Slovak were the bottom 3. 
+```
+
+```{r}
+barplot(Penetration$Penetration_OECD_2008, names.arg=Penetration$Country, horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "Penetration per 100 Inhabitants by Country - 2008")
+
+# In 2008, Denmark, Netherlands and Norway were among the Top 3 countries with highest Penetration. Mexico, Turkey and Poland were the bottom 3.
+```
+
+```{r}
+# There appears to be no strong relationship between Penetration per 100 Inhabitants and Percentage of Pop. in Urban areas. Next we looked at Penetration per Household, which measures the subscriptions per 100 households. When looking at this variable, top five countries were Korea, Iceland, Netherlands, Denmark and Sweden, with an average of 89% population in urban areas. The bottom five countries were Turkey, Mexico, Greece, Italy and Slovak, with an average of 65% population in urban areas. 
+
+# Top: Korea - 0.81 Iceland - 0.93 Netherlands - 0.80 Denmark - 0.86 Sweden 0.84
+# Bottom: Turkey 0.67 Mexico 0.76 Greece - 0.59 Italy - 0.68 Slovak 0.56
+
 barplot(Penetration$Penetration_OECD_Household, names.arg=Penetration$Country
-        , horiz=TRUE, las=1, cex.names=0.5, border=NA)
+        , horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "Penetration per 100 Households by Country - 2007")
+
+
+```
+
+```{r}
+data.frame(Penetration$Country, Penetration$Population_Urban_Dec)
 ```
 
 # Be sure to describe any anomalies, coding issues, or potentially erroneous values. Explain how you respond to each issue you identify. 
