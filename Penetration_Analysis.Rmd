@@ -39,6 +39,34 @@ summary(Penetration)
 # - Growth_3G_Penetration and Percent_Population_Urban are in percent units
 # - WiFi_Hotspots values have a much higher range than all other variables.
 ```
+
+```{r}
+#Next we wanted to look at how the the penetration values are distributed to get a sense of the range of values. Here we notice that the distribution of values rises almost regularly to a peak before falling sharply, overall the data reflect a negative skew. 
+
+hist(Penetration$Penetration_OECD_2008, main="Penetration per 100 inhabitants in OECD 2008",  xlab = "Penetration (per 100 inhabitants)")
+#may need ot be rebinned
+```
+```{r}
+#then we wanted to compare the distributions for 2007 and 2008. Notes: a we can see the distribution when compared to the previous year does not look nearly as uniform. There is a greater frequency of values above 30 inhabitants (per 100) than in the following year which makes us want to take a closer look at the difference in penetration values between the two year from OECD data. to see if we can get a better sense of how penetration grew between these two years.
+
+hist(Penetration$Penetration_OECD_2007, main="Penetration per 100 inhabitants in OECD 2007",  xlab = "Penetration (per 100 inhabitants)")
+# may need to be rebinned
+```
+```{r}
+Difference = Penetration$Penetration_OECD_2008 - Penetration$Penetration_OECD_2007
+Difference
+
+Year_Comparison = data.frame(Penetration$Country, Penetration$Penetration_OECD_2007, Penetration$Penetration_OECD_2008, Difference)
+Year_Comparison
+
+#Notes: We can see that with the exception of Finland all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. Interestingly, Finland shows negative growth of .01 inhabitants per 100 while the rest of the member countries show some growth between 2007 and 2008. 
+```
+```{r}
+summary(Difference)
+
+#Looking at the summary of difference we see that average change in penetration between 2007 and 2008 in the OECD data is 2.3 inhabitants per 100. The minimum is our negative value with Finland and the max is 3.81 in the SLovak republic. 
+
+```
 ```{r}
 # Next, we wanted to look at the relationship between values from the same time period. Since most variable years were unspecified, we assumed OECD data was mainly from 2007. 
 
@@ -105,11 +133,39 @@ barplot(Penetration$Penetration_OECD_Household, names.arg=Penetration$Country
 ```{r}
 data.frame(Penetration$Country, Penetration$Population_Urban_Dec)
 ```
+```{r}
+#We also wanted to look at the correlation between wifi hotspots per 100000 residents and percentage of urban populations.  There seems to be a slight negative correlation but really its so close to zero that there is not really a linear relationship. 
+
+cor(Penetration$`Wifi_Hotspots_Per_100,000`, Penetration$Population_Urban_Dec)
+
+```
+```{r}
+
+scatterplot(Penetration$`Wifi_Hotspots_Per_100,000`, Penetration$Population_Urban_Dec, main = "Urban Population and Wifi Hotspots", ylab = "Urban Population(as decimal)", xlab = "Wifi Hotspots (per 100,000 inhabitants)")
+
+#Graph needs ot be cleaned up
+#There seems to be a couple of outliers but in general the very slightly negative sloping/non linear correlation (green line) is reflected here. 
+```
+
+```{r}
+#We wanted to see if we could compare wifi hot spots per 100 inhabitants to penetration per 100 inhabitants. To do this we took the values for wifi per 100,000 inhabitants and divided by 1,000. It looks not have yeilded anything particularly helpful.  The transformation as applied to wifi_hotpots per 100,000 inhabitants was not helpful. I wonder if we need to apply a logarithmic trnasormation instead of simple division.
+
+Wifi_hotspots_100 = Penetration$`Wifi_Hotspots_Per_100,000` / 1000
+
+Wifi_compare = data.frame(Penetration$Country, Penetration$Penetration_OECD_2008, Wifi_hotspots_100)
+
+Wifi_compare
+```
+
+
+
 
 # Be sure to describe any anomalies, coding issues, or potentially erroneous values. Explain how you respond to each issue you identify. 
 
 # Note any features that appear relevant to statistical analysis. Discuss what transformations may be appropriate for each variable.
 # Import and Process Speed CSV File
+
+
 ```{r}
 Speed = read.csv("Speed.csv")
 colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
