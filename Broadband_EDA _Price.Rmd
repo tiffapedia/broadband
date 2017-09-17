@@ -1,0 +1,158 @@
+---
+title: "Broadband Exploration"
+author: "w203 Teaching Team"
+output: pdf_document
+---
+
+## Background
+
+High-speed network connectivity is increasingly viewed as an essential public infrastructure.  There is a active research community that investigates the extent to which government policies foster a healthy broadband market.  The performance of a network industry is often considered in terms of two metrics.
+
+- Speed refers to rate at which customers can upload or download bits of data.
+- Penetration refers to the fraction of customers that have access to network service.
+
+While the policy debate in the United States is largely limited to so-called net neutrality rules, much of the developed world has adopted more aggressive regulatory structures.  These include open access regulations, which compel network owners to share part of their infrastructure with other companies at regulated rates.  Such regulations are often justified by the observation that the high cost of network infrastructure creates what is known as a natural monopoly.  In 2010, a major study by the Berkman Center for Internet and Society reported that out of all OECD countries, only the United States, Mexico, and the Slovak Republic had not adopted some form of open access.
+
+Other countries may also mandate that companies increase penetration, such as through universal access regulation.
+
+In the United States, network owners argue that facilities-based competition - a term that means unregulated competition, typically between a cable and a DSL provider - is sufficient to incentivize investment in high-quality networks.  They caution that attempts to regulate prices or mandate greater penetration will reduce incentives to invest in modern equipment or to lay cable to difficult-to-reach rural areas.  Thus, there is a trade-off among price, speed, and penetration.
+
+
+## Data
+
+You are given three files, Price.csv, Penetration.csv, and Speed.csv.  These contain actual data that was utilized by the Berkman Center, but they may have been modified to test your abilities.
+
+As a first step in your analysis, you should combine these files into a single data frame.  Although there is a merge function in base R, we recommend that you use the dplyr package, which contains a set of join functions.  These match the familiar terminilogy from SQL.
+
+```{r, eval= FALSE}
+library(dplyr)
+#?full_join
+install.packages('rworldmap',dependencies=TRUE) 
+library(ggplot2)
+library(reshape2)
+library(rworldmap)
+```
+
+## Objective
+
+Using only descriptive statistics (no inference), investigate the three-way relationship between price, speed, and penetration.  Does a trade-off exist between these concepts?  Secondarily, consider whether there is evidence for the beneficial effects of open access policies.
+
+```{r}
+setwd("D:/Documents/UC Berkeley MIDS/W203 Statistics/Lab 1/Lab_1/Broadband_EDA")
+#Import and Process Price CSV File
+Price = read.csv("Price.csv")
+colnames(Price)
+colnames(Price) <- c('Country', 'Country_Code', 'Price_LowSpeed', 'Price_MedSpeed', 'Price_HighSpeed', 'Price_VeryHighSpeed')
+colnames(Price)
+
+#Import and Process Penetration CSV File
+Penetration = read.csv("Penetration.csv")
+#Drop the NA Column which contains no data
+Penetration <- Penetration[, 0:12]
+colnames(Penetration) <- c('Country', 'Country_Code', 'Penetration_OECD_2008', 'Penetration_OECD_2007', 'Penetration_OECD_Household', 'Penetration_OECD_2G_3G', 'Penetration_GC_Penetration', 'Penetration_3G', 'Growth_3G_Penetration', 'WiFi_Hotspots', 'Wifi_Hotspots_Per_100,000', 'Percent_Population_Urban')
+colnames(Penetration)
+
+#Import and Process Speed CSV File
+Speed = read.csv("Speed.csv")
+colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
+colnames(Speed)
+
+#Join 3 Datasets together via full join. Join via Country Code because it's more standardized than Country (Eliminate mis-spelling and/or capitalized vs not-capitalized)
+join1 = full_join(Price, Penetration, by = c("Country_Code" = "Country_Code"))
+Broadband = full_join(join1, Speed, by = c("Country_Code" = "Country_Code"))
+```
+
+
+Price Analysis: The goal of this analysis that follows is to describe the Price variable of the Broadband Dataset
+
+```{r}
+# Need to transform the price data into a number class (currently string with '$')
+Broadband$Price_HighSpeed = as.double(gsub('$', '', Broadband$Price_HighSpeed, fixed = TRUE))
+Broadband$Price_LowSpeed <- as.double(gsub('$', '', Broadband$Price_LowSpeed, fixed = TRUE))
+Broadband$Price_MedSpeed <- as.double(gsub('$', '', Broadband$Price_MedSpeed, fixed = TRUE))
+Broadband$Price_VeryHighSpeed <- as.double(gsub('$', '', Broadband$Price_VeryHighSpeed, fixed = TRUE))
+```
+
+```{r}
+#Summary Data Compiled over Entire Dataset (All Speeds)
+summary(c(Broadband$Price_LowSpeed, Broadband$Price_MedSpeed, Broadband$Price_HighSpeed, Broadband$Price_VeryHighSpeed))
+#Summary of Price Categories
+summary(Broadband[,3:6])
+```
+Using the summary function, we can see that the Price increases with increased speed. Additionally, the mean price for the datset lies between the two middle speed options (medium and high). A boxplot will help to better visualize the price data. 
+
+```{r}
+boxplot(Broadband[, 3:6], use.cols = TRUE, names = c("Low Speed", "Medium Speed", "High Speed", "Very High Speed"))
+```
+
+As would be expected, the higher speed broadband is correlated to higher price. What can be determined from the boxplot visualization is that the lower speeds tend to have a smaller standard deviation or spread (quartiles aren't spread out as much). 
+
+Because there is no data avaialable associated with what speed consistitues low, medium, high and very high speeds, it is not worthwhile to generate a linear regression model. From the boxplot, assuming that there are even intervals between the categories, it appears as though the "very high Speed" internet is higher $/MB compared with the other caterogires, however because speed data isn't available this assertion cannot be made. 
+
+It is assumed for this analysis that the cateogries "low, medium, high, very high" are defined by a speed range (ex Low: 0-3 MB/sec) rather than a relative category. 
+
+```{r}
+#Low Speed Standard Deviation
+sd(Broadband$Price_LowSpeed, na.rm = TRUE)
+
+#Medium Speed Standard Deviation
+sd(Broadband$Price_MedSpeed, na.rm = TRUE)
+
+#High Speed Standard Deviation
+sd(Broadband$Price_HighSpeed, na.rm = TRUE)
+
+#Very High Speed Standard Deviation
+sd(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
+```
+
+As can be observed, the two lower speed categories (low, medium) have an overall lower standard deviation, where the price range for high speed service is variable. 
+
+Presumably the evolution of high and very high speed networks are newer, and therefore not existent in every country, generating a NA datapoint in those countries where high/very high speed networks aren't available. From the column summaries previously posted, we see that there are between 2-4 missing datapoints per column in the low to high speed variables, but in the very high speed category, there are 13 missing variables.
+
+It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't avialable could be enlightening. 
+
+```{r}
+subcases = is.na(Broadband$Price_VeryHighSpeed)
+
+#Low Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE) > mean(Broadband$Price_LowSpeed, na.rm = TRUE)
+
+#Medium Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE) > mean(Broadband$Price_MedSpeed, na.rm = TRUE)
+
+#High Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE) > mean(Broadband$Price_HighSpeed, na.rm = TRUE)
+```
+
+
+
+From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average for that class. 
+
+The price categories do not have a speed metric (kb/MB/3G/etc) therefore it is difficult to determine the difference in speed between categories. For this reason another mean variable was created for analysis comparing speed and penetration. 
+
+Mean column uses the categories low, med, high to generate an overall mean price per country. This may be used in other analysis
+```{r}
+Broadband$Price_Mean <- rowMeans(Broadband[,3:5])
+```
+
+```{r}
+mapDevice('x11')
+spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
+mapCountryData(spdf, nameColumnToPlot = "Price_Mean", catMethod = "pretty", colourPalette = "topo")
+?mapCountryData
+
+```
+Visualizing the data by map can help to see that price for broadboan can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
+
+
+It is now desired to understand the comparison of Price and Penetration
+```{R}
+#Change the Percent Data to type: numeric
+Broadband$Growth_3G_Penetration <- as.double(gsub('%', '', Broadband$Growth_3G_Penetration, fixed = TRUE)) / 100
+Broadband$Percent_Population_Urban <- as.double(gsub('%', '', Broadband$Percent_Population_Urban, fixed = TRUE)) / 100
+cor(Broadband[,c(3:6, 8:17)], use = "complete.obs")
+```
+Looking at the price data (first three columns) the highest negative correlation is in regard to Wifi_Hotspots_Per_100,000 and Penetration_GC_Penetration
