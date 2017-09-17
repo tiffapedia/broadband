@@ -17,7 +17,10 @@ When you click the **Knit** button a document will be generated that includes bo
 ```{r}
 Price = read.csv("Price.csv")
 colnames(Price) <- c('Country', 'Country_Code', 'Price_LowSpeed', 'Price_MedSpeed', 'Price_HighSpeed', 'Price_VeryHighSpeed')
-colnames(Price)
+
+Price[Price==""] <- NA
+
+Price
 ```
 
 # Import and Process Penetration CSV File
@@ -115,6 +118,9 @@ barplot(Penetration$Penetration_OECD_2007, names.arg=Penetration$Country
 ```{r}
 barplot(Penetration$Penetration_OECD_2008, names.arg=Penetration$Country, horiz=TRUE, las=1, cex.names=0.5, border=NA, main = "Penetration per 100 Inhabitants by Country - 2008")
 
+#top_5_Pen_08 = order(Broadband$Penetration_OECD_2008, decreasing=TRUE)[1:5]
+#Broadband[top_5,]
+
 # In 2008, Denmark, Netherlands and Norway were among the Top 3 countries with highest Penetration. Mexico, Turkey and Poland were the bottom 3.
 ```
 
@@ -140,7 +146,7 @@ cor(Penetration$`Wifi_Hotspots_Per_100,000`, Penetration$Population_Urban_Dec)
 
 ```
 ```{r}
-
+library(car)
 scatterplot(Penetration$`Wifi_Hotspots_Per_100,000`, Penetration$Population_Urban_Dec, main = "Urban Population and Wifi Hotspots", ylab = "Urban Population(as decimal)", xlab = "Wifi Hotspots (per 100,000 inhabitants)")
 
 #Graph needs ot be cleaned up
@@ -148,7 +154,7 @@ scatterplot(Penetration$`Wifi_Hotspots_Per_100,000`, Penetration$Population_Urba
 ```
 
 ```{r}
-#We wanted to see if we could compare wifi hot spots per 100 inhabitants to penetration per 100 inhabitants. To do this we took the values for wifi per 100,000 inhabitants and divided by 1,000. It looks not have yeilded anything particularly helpful.  The transformation as applied to wifi_hotpots per 100,000 inhabitants was not helpful. I wonder if we need to apply a logarithmic trnasormation instead of simple division.
+#We wanted to see if we could compare WiFi hot spots per 100 inhabitants to penetration per 100 inhabitants. To do this we took the values for WiFi per 100,000 inhabitants and divided by 1,000. The transformation as applied to wifi_hotpots per 100,000 inhabitants was not helpful. I wonder if we need to apply a logarithmic transformation instead of simple division.
 
 Wifi_hotspots_100 = Penetration$`Wifi_Hotspots_Per_100,000` / 1000
 
@@ -169,7 +175,8 @@ Wifi_compare
 ```{r}
 Speed = read.csv("Speed.csv")
 colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
-colnames(Speed)
+Speed <- Speed[0:30,]
+Speed
 ```
 
 # Join 3 Datasets together via full join. Join via Country Code because it's more standardized than Country (Eliminate mis-spelling and/or capitalized vs not-capitalized)
@@ -177,12 +184,207 @@ colnames(Speed)
 library("dplyr")
 join1 = full_join(Price, Penetration, by = c("Country_Code" ="Country_Code"))
 Broadband = full_join(join1, Speed, by = c("Country_Code" ="Country_Code"))
-head(Broadband)
+Broadband
 ```
 
  
 ```{r}
-names(Broadband)
+# Before looking at the relationship between Penetration and Price, we had to turn the Price columns into numeric values. 
+
+Price_LowSpeed = as.numeric(sub('\\$','',as.character(Broadband$Price_LowSpeed)))
+Broadband$Price_LowSpeed_Num = Price_LowSpeed
+
+Price_MedSpeed = as.numeric(sub('\\$','',as.character(Broadband$Price_MedSpeed)))
+Broadband$Price_MedSpeed_Num = Price_MedSpeed
+
+Price_HighSpeed = as.numeric(sub('\\$','',as.character(Broadband$Price_HighSpeed)))
+Broadband$Price_HighSpeed_Num = Price_HighSpeed
+
+Price_VeryHighSpeed = as.numeric(sub('\\$','',as.character(Broadband$Price_VeryHighSpeed)))
+Broadband$Price_VeryHighSpeed_Num = Price_VeryHighSpeed
+# Check if conversion worked:
+head(Broadband)
+```
+
+# To begin looking at the relationship between Penetration and Price, we started with the question: Does higher penetration per 100 inhabitants mean lower prices for high speed or very high speed internet?
+```{r}
+top_5_Pen_08 = order(Broadband$Penetration_OECD_2008, decreasing=TRUE)[1:5]
+Broadband[top_5_Pen_08,]
+
+# Top 5 Countries with the highest penetration per 100 inhabitants were Denmark, Netherlands, Norway, Switzerland and Iceland. 
+
+```
+
+```{r}
+par(mfrow = c(2,2))
+boxplot(Broadband[top_5_Pen_08,38:39], col="salmon", main=toupper("HS & VS Price for Top 5"), font.main=3, cex.main=1.2)
+
+boxplot(Broadband[,38:39], col="royalblue", main=toupper("HS & VS Price Distribution"), font.main=3, cex.main=1.2)
+
+boxplot(Broadband[top_5_Pen_08,36:37], col="salmon", main=toupper("LS & MS Price for Top 5"), font.main=3, cex.main=1.2)
+
+boxplot(Broadband[,36:37], col="royalblue", main=toupper("LS & MS Price Distribution"), font.main=3, cex.main=1.2)
+
+# Top right - distributions of High Speed and Very High Speed Prices for the Top 5 Countries with the Highest Penetration per 100 Inhabitants. Top left - distributions of High Speed and Very High Speed Prices for all countries. Though the Top 5 countries did not have the lowest prices for either speed, the average prices for both speed were lower than prices overall for all countries. Additionally, the highest prices among the Top 5 countries were around or below the third quartile of prices overall. It's important to note that Very High Speed prices were not available for 11 countries, which may suggest that such an option is unavailable in these countries. 
+
+# Summary stats for HS 
+summary(Broadband[top_5_Pen_08,38])
+summary(Broadband[,38])
+
+# Summary stats for VHS 
+summary(Broadband[top_5_Pen_08,39])
+summary(Broadband[,39])
+
+Broadband[is.na(Broadband$Price_VeryHighSpeed_Num),]
+```
+
+```{r}
+# Bottom right - distributions of Low Speed and Medium Speed Prices for the Top 5 Countries with the Highest Penetration per 100 Inhabitants. Bottom left - distributions of Low Speed and Medium Speed Prices for all countries. Again, the Top 5 Countries did not have the lowest prices, however, their average prices in Low and Medium Speed were lower than that overall. 
+
+# Summary stats for LS 
+summary(Broadband[top_5_Pen_08,36])
+summary(Broadband[,36])
+
+# Summary stats for MS 
+summary(Broadband[top_5_Pen_08,37])
+summary(Broadband[,37])
+```
+
+```{r}
+# Next we looked at the price distributions for the countries with the lowest penetration per 100 inhabitants. 
+
+bottom_5_Pen_08 = order(Broadband$Penetration_OECD_2008, decreasing=FALSE)[1:5]
+Broadband[bottom_5_Pen_08,]
+
+# Bottom 5 Countries: Mexico, Turkey, Poland, Slovak Rep. and Greece. 
+
+par(mfrow = c(1,2))
+boxplot(Broadband[bottom_5_Pen_08,38:39], col="lightgoldenrod1", main=toupper("HS & VS Price for Bottom 5"), font.main=3, cex.main=1.2)
+
+boxplot(Broadband[,38:39], col="hotpink4", main=toupper("HS & VS Price Distribution"), font.main=3, cex.main=1.2)
+
+# Summary stats for HS 
+summary(Broadband[bottom_5_Pen_08,38])
+summary(Broadband[,38])
+
+# Summary stats for VHS 
+summary(Broadband[bottom_5_Pen_08,39])
+summary(Broadband[,39])
+
+# Observations: 
+# - HS: Two NA's in HS, both of which were countries within the Bottom 5. Highest price among all countries for HS was price in Poland at $210.36. 
+# - VHS: All but Slovak Rep. among the Bottom 5 did not have prices for VHS. Though the price was not the max among countries overall, it is greater than the average cost for VHS among countries overall.
+```
+
+```{r}
+par(mfrow = c(1,2))
+boxplot(Broadband[bottom_5_Pen_08,36:37], col="lightgoldenrod1", main=toupper("LS & MS Price for Bottom 5"), font.main=3, cex.main=1.2)
+
+boxplot(Broadband[,36:37], col="hotpink4", main=toupper("LS & MS Price Distribution"), font.main=3, cex.main=1.2)
+
+# Summary stats for LS 
+summary(Broadband[bottom_5_Pen_08,36])
+summary(Broadband[,36])
+
+# Summary stats for MS 
+summary(Broadband[bottom_5_Pen_08,37])
+summary(Broadband[,37])
+
+# Observations: 
+# - LS: Highest price among all countries was Mexico which was among the Bottom 5.
+# - MS: Highest price among all countries was Poland which was among the Bottom 5.
+# Average prices for LS and MS connection in the Bottom 5 Countries were considerably higher than in countries overall. 
+Broadband[bottom_5_Pen_08,]
+```
+
+# Next we looked at the price distributions for the countries with the highest and lowest penetration per 100 households. 
+```{r}
+top_5_Household = order(Broadband$Penetration_OECD_Household, decreasing=TRUE)[1:5]
+Broadband[top_5_Household,]
+
+# Top 5 Countries: Korea, Iceland, Netherlands, Denmark and Norway, which is the same as the Top 5 Countries with the highest penetration per 100 inhabitants except for Korea.
+
+# Summary stats for HS- Top 5 
+summary(Broadband[top_5_Household,38])
+summary(Broadband[,38])
+
+# Summary stats for VHS- Top 5
+summary(Broadband[top_5_Household,39])
+summary(Broadband[,39])
+
+# Summary stats for LS- Top 5
+summary(Broadband[top_5_Household,36])
+summary(Broadband[,36])
+
+# Summary stats for MS- Top 5
+summary(Broadband[top_5_Household,37])
+summary(Broadband[,37])
+
+# Observations: 
+# Average prices for all connection in the Top 5 Countries with highest penetration by 100 households were lower than price overall. 
+
+```
+
+```{r}
+bottom_5_Household = order(Broadband$Penetration_OECD_Household, decreasing=FALSE)[1:5]
+Broadband[bottom_5_Household,]
+
+# Bottom 5 Countries were Turkey, Mexico, Greece, Italy, and Slovak Rep. which is the same as the Bottom 5 Countries with lowest penetration per 100 inhabitants, except for Italy.
+# Summary stats for HS- Bottom 5 
+summary(Broadband[bottom_5_Household,38])
+summary(Broadband[,38])
+
+# Summary stats for VHS- Bottom 5
+summary(Broadband[bottom_5_Household,39])
+summary(Broadband[,39])
+
+# Summary stats for LS- Bottom 5
+summary(Broadband[bottom_5_Household,36])
+summary(Broadband[,36])
+
+# Summary stats for MS- Bottom 5
+summary(Broadband[bottom_5_Household,37])
+summary(Broadband[,37])
+
+# Observations: 
+# - HS: Two NA's in all countries overall were from countries from the Bottom 5. 
+# - VHS: All countries again, except Slovak Rep. did not have prices for VHS.
+# - LS: The minimum (Italy at $13.10) and max price (Mexico at $60.23) for LS overall was from countries from the Bottom 5. Average prices among countries in the Bottom 5 again was higher than average overall.
+# - MS: Average prices among countries in the Bottom 5 again was higher than average overall.
+```
+
+```{r}
+top_5_2G_3G = order(Broadband$Penetration_OECD_2G_3G, decreasing=TRUE)[1:5]
+Broadband[top_5_2G_3G,]
+
+# Top 5 Countries: Italy, Greece, Luxembourg, Czech rep. and Portugal
+
+# Summary stats for HS- Top 5 2G_3G
+summary(Broadband[top_5_2G_3G,38])
+summary(Broadband[,38])
+
+# Summary stats for VHS- Top 5 2G_3G
+summary(Broadband[top_5_2G_3G,39])
+summary(Broadband[,39])
+
+# Summary stats for LS- Top 5 2G_3G
+summary(Broadband[top_5_2G_3G,36])
+summary(Broadband[,36])
+
+# Summary stats for MS- Top 5 2G_3G
+summary(Broadband[top_5_2G_3G,37])
+summary(Broadband[,37])
+
+# Observations: 
+# - HS: Luxembourg had the lowest price for High Speed connection at $0.69 which may be an error in entry as all other prices were more than 3x that price. Average HS price among these countries were lower than average overall. 
+# - VHS: Among the countries with the highest 2G & 3G penetration, only Czech Rep. had a price for Very High Speed, but it also had the highest prices in across all speeds. 
+# - LS: Average LS price among these countries were lower than average overall. 
+# - MS: Average MS price among these countries were lower than average overall. Max price for MS among these countries was around the avearge MS price overall. 
+```
+
+
+```{r}
+cor(Broadband[,c("Penetration_OECD_2008", "Penetration_OECD_Household", "Penetration_OECD_2G_3G", "Penetration_3G", "WiFi_Hotspots", "Price_LowSpeed_Num", "Price_MedSpeed_Num", "Price_HighSpeed_Num", "Price_VeryHighSpeed_Num")], use = "complete.obs")
 ```
 
 
