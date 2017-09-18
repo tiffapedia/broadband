@@ -38,16 +38,18 @@ We are motivated to investigate the three-way relationship between price, speed,
 ```{r}
 # include the packages
 library(dplyr)
-library(gridExtra)
+library(moments)
+```
 
+```{r}
 # load the dataset
 penetration <- read.csv('Penetration.csv')
 price <- read.csv('Price.csv')
 speed <- read.csv('Speed.csv')
 
 # join the datasets
-data <- inner_join(penetration, price, by=c("Country", "Country.code"))
-(data <- inner_join(data, speed, by=c("Country", "Country code"="Country.Code")))
+data <- inner_join(penetration, price, by=c("Country", "Country.Code"))
+(data <- inner_join(data, speed, by=c("Country", "Country.Code"="Country.code")))
 ```
 
 ### Describe the dataset
@@ -56,17 +58,10 @@ data <- inner_join(penetration, price, by=c("Country", "Country.code"))
 str(data)
 ```
 
-**What types of variables does it contain?**
-
-There are **33 variables** as listed below:
+There are 30 observations of 33 variables. The variables are listed below.
 ```{r}
 sapply(data, class)
-
 ```
-
-**How many observations are there?** 
-
-There are **30 observations**.
 
 ### Evaluate data quality
 
@@ -74,24 +69,160 @@ There are **30 observations**.
 summary(data)
 ```
 
-**Are there any issues with the data?** 
+#### 1. Outliers and Missing Values
 
-hist(mpgs, 
-     main='Histogram of the mpg variable', 
-     xlab='mpg',
-     breaks=-1:34 + 0.5)
+```{r}
+# Maximum.advertised.speed.OECD..kbps
+max_ad_speed <- as.numeric(gsub(",", "", data$Maximum.advertised.speed.OECD..kbps))
+summary(max_ad_speed)
+sort(boxplot.stats(max_ad_speed)$out)
+skewness(max_ad_speed)
+```
+```{r}
+# Average.advertised.speed.OECD..kbps   
+avg_ad_speed <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps))
+summary(avg_ad_speed)
+sort(boxplot.stats(avg_ad_speed)$out)
+skewness(avg_ad_speed)
+```
+```{r}
+# Average.actual.speed..Akamai..kbps
+avg_actual_speed <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps))
+summary(avg_actual_speed)
+sort(boxplot.stats(avg_actual_speed)$out)
+skewness(avg_actual_speed, na.rm=TRUE)
+```
+```{r}
+# Average.download.speedtest.net..kbps
+avg_download_speed <- as.numeric(gsub(",", "", data$Average.download.speedtest.net..kbps))
+summary(avg_download_speed)
+sort(boxplot.stats(avg_download_speed)$out)
+skewness(avg_download_speed)
+```
+```{r}
+# Average.upload.speedtest.net..kbps
+avg_upload_speed <- as.numeric(gsub(",", "", data$Average.upload.speedtest.net..kbps))
+summary(avg_upload_speed)
+sort(boxplot.stats(avg_upload_speed)$out)
+skewness(avg_upload_speed)
+```
+```{r}
+# Average.latency.speedtest.net
+avg_latency_speed <- data$Average.latency.speedtest.net
+summary(avg_latency_speed)
+sort(boxplot.stats(avg_latency_speed)$out)
+skewness(avg_latency_speed)
+```
 
-grid.arrange(, ncol=2)
+Outliers are observations that lie outside 1.5 * IQR (Inter Quartile Range). We noticed that there is an obvious outlier in the maximum advertised speed: 1,000,000 kbps. For this reason, the maximum advertised speed is more skewed towards the higher end of the spectrum. We also noted that there are several outliers leaning towards faster speed, but more analysis is required to make a determination.
 
-**Explain how you handled these potential issues.**
+TODO: Where should we put the following paragraph: in data quality or in data preparation? or both?
 
+There are four countries (Hungary, Poland, Slovak Republic, Turkey) that did not record their average actual speed, meaning we cannot take these observations into consideration. This is unfortunate because Slovak Republic is one of the three countries that does not adopt the open access policy.
+
+```{r}
+data$Country[is.na(avg_actual_speed)]
+```
+
+* * *
+
+TODO: Discard these information???
+```{r}
+# Standard.deviation.download..speedtest.net 
+sd_download_speed <- as.numeric(gsub(",", "", data$Standard.deviation.download..speedtest.net))
+summary(sd_download_speed)
+sort(boxplot.stats(sd_download_speed)$out)
+```
+```{r}
+# Standard.deviation.upload..speedtest.net
+sd_upload_speed <- as.numeric(gsub(",", "", data$Standard.deviation.upload..speedtest.net))
+summary(sd_upload_speed)
+sort(boxplot.stats(sd_upload_speed)$out)
+```
+```{r}
+# Standard.deviation.latency..speedtest.net
+sd_latency_speed <- as.numeric(gsub(",", "", data$Standard.deviation.latency..speedtest.net))
+summary(sd_latency_speed)
+sort(boxplot.stats(sd_latency_speed)$out)
+```
+```{r}
+# Median.download..speedtest.net..kbps
+median_latency_speed <- as.numeric(gsub(",", "", data$Median.download..speedtest.net..kbps))
+summary(median_latency_speed)
+sort(boxplot.stats(median_latency_speed)$out)
+```
+```{r}
+# Median.upload..speedtest.net..kbps
+median_upload_speed <- as.numeric(gsub(",", "", data$Median.upload..speedtest.net..kbps))
+summary(median_upload_speed)
+sort(boxplot.stats(median_upload_speed)$out)
+```
+```{r}
+# Median.latency..speedtest.net
+median_latency_speed <- data$Median.latency..speedtest.net
+summary(median_latency_speed)
+sort(boxplot.stats(median_latency_speed)$out)
+```
+```{r}
+# X90p..Download..speedtest.net..kbps
+x90_download_speed <- as.numeric(gsub(",", "", data$X90p..Download..speedtest.net..kbps))
+summary(x90_download_speed)
+sort(boxplot.stats(x90_download_speed)$out)
+```
+```{r}
+# X90p..Upload..speedtest.net..kbps
+x90_upload_speed <- as.numeric(gsub(",", "", data$X90p..Upload..speedtest.net..kbps))
+summary(x90_upload_speed)
+sort(boxplot.stats(x90_upload_speed)$out)
+```
+```{r}
+# X10p..Latency..speedtest.net
+x10_latency_speed <- as.numeric(gsub(",", "", data$X10p..Latency..speedtest.net))
+summary(x10_latency_speed)
+sort(boxplot.stats(x10_latency_speed)$out)
+```
+
+* * *
+
+#### 2. Obvious inconsistencies 
+No obvious inconsistencies are found in the speed dataset. 
+
+TODO: obvious inconsistencies in penetration? in price? 
 
 ### Data processing or prepration 
 
+We cannot pass non-numeric variables when we want to perform univariate analysis on speed. As you can see, there are several columns of type "factor." For this reason, we convert the speed dataset from type factor into type numeric. 
+
+```{r}
+sapply(data, is.factor)
+```
+
+We also noted that there are four countries (Hungary, Poland, Slovak Republic, Turkey) that did not record their average actual speed, meaning we cannot take these observations into consideration. This is unfortunate because Slovak Republic is one of the three countries that does not adopt the open access policy.
+
+```{r}
+data$Country[is.na(avg_actual_speed)]
+```
+
+
 ## Univariate Analysis of Key Variables
+
+Use visualizations and descriptive statistics to perform a univariate analysis of each key variable. Be sure to describe any anomalies, coding issues, or potentially erroneous values. Explain how you respond to each issue you identify. Note any features that appear relevant to statistical analysis. Discuss what transformations may be appropriate for each variable.
+
+My question: What are we going to do with the x90 download and upload speed && x10 latency speed? 
+
+
+
 
 ## Analysis of Key Relationships
 
+Explore how your outcome variable is related to the other variables in your dataset. Make sure to use visualizations to understand the nature of each bivariate relationship.
+What tranformations can you apply to clarify the relationships you see in the data? Be sure to justify each transformation you use.
+
 ## Analysis of Secondary Effects
 
+What secondary variables might have confounding effects on the relationships you have identified? Explain how these variables affect your understanding of the data.
+
 ## Conclusion
+
+Summarize your exploratory analysis. What can you conclude based on your analysis?
+
