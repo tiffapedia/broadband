@@ -37,8 +37,9 @@ We are motivated to investigate the three-way relationship between price, speed,
 
 ```{r}
 # include the packages
-library(dplyr)
-library(moments)
+library(dplyr) # for inner_join
+library(moments) # for skewness
+library(gridExtra) # for grid.arrange
 ```
 
 ```{r}
@@ -68,6 +69,8 @@ sapply(data, class)
 ```{r}
 summary(data)
 ```
+
+Most variables for the speed dataset are categorical with the exception of latency speed. What it should have been is a ratio, where it has an ordered, numeric scale and 0 a true zero being 0 kbps.
 
 #### 1. Outliers and Missing Values
 
@@ -208,7 +211,121 @@ data$Country[is.na(avg_actual_speed)]
 
 Use visualizations and descriptive statistics to perform a univariate analysis of each key variable. Be sure to describe any anomalies, coding issues, or potentially erroneous values. Explain how you respond to each issue you identify. Note any features that appear relevant to statistical analysis. Discuss what transformations may be appropriate for each variable.
 
+Measures of central tendancy:
+Mean
+Median
+Mode
+
+Measures of dispersion:
+Min
+Max
+Range
+Quartiles
+Variance
+Standard deviation
+
+Other measures include:
+Skewness
+Kurtosis
+
 My question: What are we going to do with the x90 download and upload speed && x10 latency speed?
+
+```{r}
+# countries that have not adopted open access policy: United States, Mexico, Slovak Republic
+(non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic")))
+
+# countries that adopted open access policy
+(open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic"))))
+```
+
+```{r}
+# Maximum.advertised.speed.OECD..kbps
+no_max_ad_speed <- as.numeric(gsub(",", "", non_open_countries$Maximum.advertised.speed.OECD..kbps))
+summary(no_max_ad_speed)
+sort(boxplot.stats(no_max_ad_speed)$out)
+skewness(no_max_ad_speed)
+```
+```{r}
+# Maximum.advertised.speed.OECD..kbps
+o_max_ad_speed <- as.numeric(gsub(",", "", open_countries$Maximum.advertised.speed.OECD..kbps))
+summary(o_max_ad_speed)
+summary(o_max_ad_speed[!o_max_ad_speed %in% boxplot.stats(o_max_ad_speed)$out]) # outliers removed
+sort(boxplot.stats(o_max_ad_speed)$out)
+skewness(o_max_ad_speed)
+```
+```{r}
+par(mfrow = c(1,2))
+boxplot(no_max_ad_speed,
+        ylim=range(3000,120000),
+        main="non-open")
+boxplot(o_max_ad_speed,
+        ylim=range(3000,120000),
+        outline=FALSE,
+        main="open (outliers removed)")
+```
+
+```{r}
+# Average.advertised.speed.OECD..kbps
+no_avg_ad_speed <- as.numeric(gsub(",", "", non_open_countries$Average.advertised.speed.OECD..kbps))
+summary(no_avg_ad_speed)
+sort(boxplot.stats(no_avg_ad_speed)$out)
+skewness(no_avg_ad_speed)
+```
+```{r}
+# Maximum.advertised.speed.OECD..kbps
+o_avg_ad_speed <- as.numeric(gsub(",", "", open_countries$Average.advertised.speed.OECD..kbps))
+summary(o_avg_ad_speed)
+summary(o_avg_ad_speed[!o_avg_ad_speed %in% boxplot.stats(o_avg_ad_speed)$out]) # outliers removed
+sort(boxplot.stats(o_avg_ad_speed)$out)
+skewness(o_avg_ad_speed)
+```
+```{r}
+par(mfrow = c(1,2))
+boxplot(no_avg_ad_speed,
+        ylim=range(1000,20000),
+        main="non-open")
+boxplot(o_avg_ad_speed,
+        ylim=range(1000,20000),
+        outline=FALSE,
+        main="open (outliers removed)")
+```
+
+
+```{r}
+# Average.advertised.speed.OECD..kbps
+avg_ad_speed <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps))
+summary(avg_ad_speed)
+sort(boxplot.stats(avg_ad_speed)$out)
+skewness(avg_ad_speed)
+```
+```{r}
+# Average.actual.speed..Akamai..kbps
+avg_actual_speed <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps))
+summary(avg_actual_speed)
+sort(boxplot.stats(avg_actual_speed)$out)
+skewness(avg_actual_speed, na.rm=TRUE)
+```
+```{r}
+# Average.download.speedtest.net..kbps
+avg_download_speed <- as.numeric(gsub(",", "", data$Average.download.speedtest.net..kbps))
+summary(avg_download_speed)
+sort(boxplot.stats(avg_download_speed)$out)
+skewness(avg_download_speed)
+```
+```{r}
+# Average.upload.speedtest.net..kbps
+avg_upload_speed <- as.numeric(gsub(",", "", data$Average.upload.speedtest.net..kbps))
+summary(avg_upload_speed)
+sort(boxplot.stats(avg_upload_speed)$out)
+skewness(avg_upload_speed)
+```
+```{r}
+# Average.latency.speedtest.net
+avg_latency_speed <- data$Average.latency.speedtest.net
+summary(avg_latency_speed)
+sort(boxplot.stats(avg_latency_speed)$out)
+skewness(avg_latency_speed)
+```
 
 
 
@@ -216,7 +333,27 @@ My question: What are we going to do with the x90 download and upload speed && x
 ## Analysis of Key Relationships
 
 Explore how your outcome variable is related to the other variables in your dataset. Make sure to use visualizations to understand the nature of each bivariate relationship.
+
 What tranformations can you apply to clarify the relationships you see in the data? Be sure to justify each transformation you use.
+
+Bivariate analysis include:
+Crosstabs
+Covariance
+Correlation
+
+Advanced techniques include:
+Cluster analysis
+Analysis of variance (ANOVA)
+Factor analysis
+Principal component analysis (PCA)
+
+```{r}
+# compare speed with price
+
+# compare speed with penetration
+
+```
+
 
 ## Analysis of Secondary Effects
 
