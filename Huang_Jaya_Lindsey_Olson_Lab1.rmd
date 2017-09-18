@@ -254,12 +254,17 @@ sort(boxplot.stats(o_max_ad_speed)$out)
 skewness(o_max_ad_speed)
 ```
 ```{r}
+# range
+(r <- range(min(no_max_ad_speed, o_max_ad_speed), max(no_max_ad_speed, o_max_ad_speed[!o_max_ad_speed %in% boxplot.stats(o_max_ad_speed)$out])))
+```
+
+```{r}
 par(mfrow = c(1,2))
 boxplot(no_max_ad_speed, 
-        ylim=range(3000,120000),
+        ylim=r,
         main="non-open")
 boxplot(o_max_ad_speed, 
-        ylim=range(3000,120000),
+        ylim=r,
         outline=FALSE,
         main="open (outliers removed)")
 ```
@@ -272,20 +277,25 @@ sort(boxplot.stats(no_avg_ad_speed)$out)
 skewness(no_avg_ad_speed)
 ```
 ```{r}
-# Maximum.advertised.speed.OECD..kbps
+# Average.advertised.speed.OECD..kbps
 o_avg_ad_speed <- as.numeric(gsub(",", "", open_countries$Average.advertised.speed.OECD..kbps))
 summary(o_avg_ad_speed)
 summary(o_avg_ad_speed[!o_avg_ad_speed %in% boxplot.stats(o_avg_ad_speed)$out]) # outliers removed
 sort(boxplot.stats(o_avg_ad_speed)$out)
 skewness(o_avg_ad_speed)
 ```
+
+```{r}
+# range
+(r <- range(min(no_avg_ad_speed, o_avg_ad_speed), max(no_avg_ad_speed, o_avg_ad_speed[!o_avg_ad_speed %in% boxplot.stats(o_avg_ad_speed)$out])))
+```
 ```{r}
 par(mfrow = c(1,2))
 boxplot(no_avg_ad_speed,
-        ylim=range(1000,20000),
+        ylim=r,
         main="non-open")
 boxplot(o_avg_ad_speed, 
-        ylim=range(1000,20000),
+        ylim=r,
         outline=FALSE,
         main="open (outliers removed)")
 ```
