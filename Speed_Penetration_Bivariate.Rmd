@@ -1,0 +1,203 @@
+---
+title: "Penetration and Speed"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+```{r}
+setwd("/Users/d/Documents/MIDS/Course_Work/W203_Stats_for_DS/Week_2/Lab_1")
+library(car)
+
+#get speed data frame
+Speed = read.csv("Speed.csv", stringsAsFactors=FALSE)
+colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
+Speed <- Speed[0:30,]
+Speed
+
+#get penetration data frame
+
+Penetration = read.csv("Penetration.csv")
+# Drop the NA Column and NA row which contains no data
+Penetration <- Penetration[0:30, 0:12]
+colnames(Penetration) <- c('Country', 'Country_Code', 'Penetration_OECD_2008', 'Penetration_OECD_2007', 'Penetration_OECD_Household', 'Penetration_OECD_2G_3G', 'Penetration_GC_Penetration', 'Penetration_3G', 'Growth_3G_Penetration', 'WiFi_Hotspots', 'Wifi_Hotspots_Per_100,000', 'Percent_Population_Urban')
+colnames(Penetration)
+Penetration
+
+
+
+
+
+library("dplyr")
+
+SP = full_join(Penetration, Speed, by = c("Country_Code" ="Country_Code"))
+SP
+
+```
+
+```{r}
+
+summary(SP)
+```
+
+Questions: how much does average advertised speed versus actual speed correlate to penetration per 100 inhabitants- i.e. does advertising matter? If so how much does maximum advertised speed relate? Or is the relationship more to do with average lag?
+
+```{r}
+#first we must convert speeds to integers as the current reading of speed into the graph produces character columbs where there should be integers
+#here looking at average advertised kbps
+SP["Avg_Advertised_kbps"] <- as.numeric(gsub(",", "", SP$Avg_Advertised_kbps))
+
+
+#next check to see if which if any, of the correlations are significant (closest to 1)
+cor(SP$Penetration_OECD_2008, SP$Avg_Advertised_kbps)
+
+```
+
+```{r}
+#Here looking at maximum advertised kbos
+
+SP["Maximum_Advertised_kbps"] <- as.integer(as.numeric(gsub(",", "", SP$Maximum_Advertised_kbps)))
+
+SP["Maximum_Advertised_kbps"]
+
+cor(SP$Penetration_OECD_2008, SP$Maximum_Advertised_kbps)
+
+```
+
+```{r} 
+#Here looking for correlation between actual average kbps
+SP["Avg_Actual_kbps"] 
+#next check to see if which if any, of the correlations are significant (closest to 1) 
+#here we had to use complete observations because NA was in several values for speed.
+cor(SP$Penetration_OECD_2008, SP$Avg_Actual_kbps, use="complete.obs")
+
+#notes: the strongest correlation is between avg actual kbps and penetration per 100 inhabitants which seem to be positively correlated.
+```
+
+```{r}
+
+scatterplot(SP$Penetration_OECD_2008, SP$Avg_Actual_kbps, ylab = "Average Actual Internet Speed (in kbps)", xlab = "Broadband Penetration in OECD (per 100 inhabitants)", main="Broadband Penetration and Average Actual Internet Speed")
+
+#here we see a positive albeit weak correlation between broadband penetration per 100 inhabitants and actual internet speeds.
+
+```
+
+```{r}
+#what about upload speeds?
+
+SP["Avg_Upload_kbps"] <- as.numeric(gsub(",", "", SP$Avg_Upload_kbps))
+
+
+#next check to see if which if any, of the correlations are significant (closest to 1)
+cor(SP$Penetration_OECD_2008, SP$Avg_Upload_kbps)
+
+#Observations: Somewhat correlated but not as strongly as average actual speeds
+
+```
+
+```{r}
+#what about median upload speed?
+
+SP["Median_Upload_kbps"] <- as.numeric(gsub(",", "", SP$Median_Upload_kbps))
+
+
+#next check to see if which if any, of the correlations are significant (closest to 1)
+cor(SP$Penetration_OECD_2008, SP$Median_Upload_kbps)
+
+#observation: even higher correlation than avg actual speeds. this is a moderately positive correlation  
+
+```
+
+```{r}
+
+scatterplot(SP$Penetration_OECD_2008, SP$Median_Upload_kbps, ylab = "Median upload speed (in kbps)", xlab = "Broadband Penetration in OECD (per 100 inhabitants)", main="Broadband Penetration and Median Upload Speed")
+```
+
+```{r}
+#Are median download speeds affected by Broadband penetration? 
+
+SP["Median_Download_kbps"] <- as.numeric(gsub(",", "", SP$Median_Download_kbps))
+
+cor(SP$Penetration_OECD_2008, SP$Median_Download_kbps)
+
+#observation: seems to be a higher correlation between average download and  
+
+```
+
+```{r}
+
+scatterplot(SP$Penetration_OECD_2008, SP$Median_Download_kbps, ylab = "Median download speed (in kbps)", xlab = "Broadband Penetration in OECD (per 100 inhabitants)", main="Broadband Penetration and Median Download Speed")
+
+```
+
+```{r}
+#What about lag?
+
+cor(SP$Penetration_OECD_2008, SP$Median_Latency)
+
+cor(SP$Penetration_OECD_2008, SP$Avg_Latency)
+
+#again median has a stronger correlation even though they are still pretty weak
+
+```
+
+```{r}
+
+scatterplot(SP$Median_Latency, SP$Penetration_OECD_2008, xlab = "Median Latency ", ylab = "Broadband Penetration in OECD (per 100 inhabitants)", main="Broadband Penetration and Median Latency(lag)")
+
+#Observation: not a good hting to plot. I think it might be a curve. It makes sense that their might be a very slight negative correlation between latency and Broadband penetration. this would make sense given that broadband connections distributed over more individuals would lead to higher lag times. 
+
+```
+
+```{r}
+#what about latency and household stuff?
+
+cor(SP$Penetration_OECD_Household, SP$Avg_Latency)
+
+#observation: not as significant
+
+```
+
+```{r}
+
+#what about latency and wifi hotspots? Is that a more meaningful measurement?
+
+cor(SP$`Wifi_Hotspots_Per_100,000`, SP$Avg_Latency)
+
+cor(SP$`Wifi_Hotspots_Per_100,000`, SP$Median_Latency)
+
+
+#observation: more significant than looking at inhabitants and within that more significant looking at median.
+
+```
+
+```{r}
+
+scatterplot(SP$`Wifi_Hotspots_Per_100,000`, SP$Median_Latency, ylab = "Median Latency ", xlab = "Wifi hotspots per 100,000", main="Wifi Hotspots per 100,000 inhabitants and Median Latency(lag)")
+
+
+```
+
+```{r}
+
+cor(SP$WiFi_Hotspots, SP$Median_Latency)
+
+cor(SP$WiFi_Hotspots, SP$Avg_Latency)
+
+#Observations: Avg latency more closely correlated than median but both are weak
+
+```
+
+
+
+```{r}
+
+
+```
