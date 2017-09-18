@@ -1,6 +1,6 @@
 ---
 title: "Broadband Exploration"
-author: "w203 Teaching Team"
+author: "Joanna Huang, Tiffany Jaya, David Lindsey, Aaron Olson"
 output: pdf_document
 ---
 
@@ -24,39 +24,67 @@ You are given three files, Price.csv, Penetration.csv, and Speed.csv.  These con
 
 As a first step in your analysis, you should combine these files into a single data frame.  Although there is a merge function in base R, we recommend that you use the dplyr package, which contains a set of join functions.  These match the familiar terminilogy from SQL.
 
-
-```{r}
-setwd("D:/Documents/UC Berkeley MIDS/W203 Statistics/Lab 1/Lab_1/Broadband_EDA")
-#Import and Process Price CSV File
-Price = read.csv("Price.csv")
-colnames(Price) <- c('Country', 'Country_Code', 'Price_LowSpeed', 'Price_MedSpeed', 'Price_HighSpeed', 'Price_VeryHighSpeed')
-colnames(Price)
-
-#Import and Process Penetration CSV File
-Penetration = read.csv("Penetration.csv")
-#Drop the NA Column which contains no data
-Penetration <- Penetration[, 0:12]
-colnames(Penetration) <- c('Country', 'Country_Code', 'Penetration_OECD_2008', 'Penetration_OECD_2007', 'Penetration_OECD_Household', 'Penetration_OECD_2G_3G', 'Penetration_GC_Penetration', 'Penetration_3G', 'Growth_3G_Penetration', 'WiFi_Hotspots', 'Wifi_Hotspots_Per_100,000', 'Percent_Population_Urban')
-colnames(Penetration)
-
-#Import and Process Speed CSV File
-Speed = read.csv("Speed.csv")
-colnames(Speed) <- c('Country', 'Country_Code', 'Maximum_Advertised_kbps', 'Avg_Advertised_kbps', 'Avg_Actual_kbps', 'Avg_Download_kbps', 'SD_Download_kbps', 'Avg_Upload_kbps', 'SD_Upload_kbps', 'Avg_Latency', 'SD_Latency', 'Median_Download_kbps', 'Median_Upload_kbps', 'Median_Latency', 'X90_Download_kbps', 'X90_Upload_kbps', 'X10_Latency')
-colnames(Speed)
-
-#Join 3 Datasets together via full join. Join via Country Code because it's more standardized than Country (Eliminate mis-spelling and/or capitalized vs not-capitalized)
-join1 = full_join(Price, Penetration, by = c("Country_Code" = "Country_Code"))
-Broadband = full_join(join1, Speed, by = c("Country_Code" = "Country_Code"))
-head(Broadband)
-colnames(Broadband)
-summary(Broadband) 
-```
-
-```{r, eval= FALSE}
-library(dplyr)
-?full_join
-```
-
 ## Objective
 
 Using only descriptive statistics (no inference), investigate the three-way relationship between price, speed, and penetration.  Does a trade-off exist between these concepts?  Secondarily, consider whether there is evidence for the beneficial effects of open access policies.
+
+## Introduction
+
+### Our motivation
+We are motivated to investigate the three-way relationship between price, speed, and penetration to see if there are any trade-off exist between these concepts. By doing so, we can determine if facilities-based competitions in countries such as United States, Mexico, and Slovak Republic have lower prices and higher penetration in comparison to other OECD countries that are regulated with open access policies. 
+
+### Load dataset
+
+```{r}
+# include the packages
+library(dplyr)
+
+# load the dataset
+penetration <- read.csv('Penetration.csv')
+price <- read.csv('Price.csv')
+speed <- read.csv('Speed.csv')
+
+# join the datasets
+data <- inner_join(penetration, price, by=c("Country", "Country.Code"))
+(data <- inner_join(data, speed, by=c("Country")))
+```
+
+### Describe the dataset
+
+```{r}
+str(data)
+```
+
+**What types of variables does it contain?**
+
+There are **33 variables** as listed below:
+```{r}
+sapply(data, class)
+
+```
+
+**How many observations are there?** 
+
+There are **30 observations**.
+
+### Evaluate data quality
+
+```{r}
+summary(data)
+```
+
+**Are there any issues with the data?** 
+
+
+**Explain how you handled these potential issues.**
+
+
+### Data processing or prepration 
+
+## Univariate Analysis of Key Variables
+
+## Analysis of Key Relationships
+
+## Analysis of Secondary Effects
+
+## Conclusion
