@@ -38,6 +38,7 @@ We are motivated to investigate the three-way relationship between price, speed,
 ```{r}
 # include the packages
 library(dplyr)
+library(gridExtra)
 
 # load the dataset
 penetration <- read.csv('Penetration.csv')
@@ -45,8 +46,8 @@ price <- read.csv('Price.csv')
 speed <- read.csv('Speed.csv')
 
 # join the datasets
-data <- inner_join(penetration, price, by=c("Country", "Country.Code"))
-(data <- inner_join(data, speed, by=c("Country")))
+data <- inner_join(penetration, price, by=c("Country", "Country.code"))
+(data <- inner_join(data, speed, by=c("Country", "Country code"="Country.Code")))
 ```
 
 ### Describe the dataset
@@ -75,6 +76,12 @@ summary(data)
 
 **Are there any issues with the data?**
 
+hist(mpgs,
+     main='Histogram of the mpg variable',
+     xlab='mpg',
+     breaks=-1:34 + 0.5)
+
+grid.arrange(, ncol=2)
 
 **Explain how you handled these potential issues.**
 
