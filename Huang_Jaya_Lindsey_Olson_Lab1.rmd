@@ -83,7 +83,7 @@ Another interesting aspect to note is the apparent outliers that we can see from
 
 ## Data processing or preparation
 
-In order to perform any analysis on the variables, we had to convert several columns of type factors into type numeric.
+In order to perform any analysis on the variables, we have to convert several columns of type factors into type numeric.
 
 ```{r}
 # Convert to double-precision values 
@@ -97,10 +97,15 @@ data$Maximum.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Maximu
 data$Average.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps))
 data$Average.actual.speed..Akamai..kbps <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps))
 data$Average.download.speedtest.net..kbps <- as.numeric(gsub(",", "", data$Average.download.speedtest.net..kbps))
-
-
-
-
+data$Average.upload.speedtest.net..kbps <- as.numeric(gsub(",", "", data$Average.upload.speedtest.net..kbps))
+data$Standard.deviation.download..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.download..speedtest.net))
+data$Standard.deviation.upload..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.upload..speedtest.net))
+data$Standard.deviation.latency..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.latency..speedtest.net))
+data$Median.download..speedtest.net..kbps <- as.numeric(gsub(",", "", data$Median.download..speedtest.net..kbps))
+data$Median.upload..speedtest.net..kbps <- as.numeric(gsub(",", "", data$Median.upload..speedtest.net..kbps))
+data$X90p..Download..speedtest.net..kbps <- as.numeric(gsub(",", "", data$X90p..Download..speedtest.net..kbps))
+data$X90p..Upload..speedtest.net..kbps <- as.numeric(gsub(",", "", data$X90p..Upload..speedtest.net..kbps))
+data$X10p..Latency..speedtest.net <- as.numeric(gsub(",", "", data$X10p..Latency..speedtest.net))
 ```
 
 
