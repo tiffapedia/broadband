@@ -61,7 +61,7 @@ For the speed dataset, we noted that there are four countries (Hungary, Poland, 
 
 ```{r}
 # list countries with missing value in Average.actual.speed..Akamai..kbps
-subset(data, data$Average.actual.speed..Akamai..kbps == '')$Country
+subset(data, data$Average.actual.speed..Akamai..kbps. == '')$Country
 ```
 
 Another interesting aspect to note is the apparent outliers that we can see from the data before we begin exploration. Poland has a percent urban population of 162% which doesn’t seem likely. Japan has a maximum advertised speed of 1,000,000 kbps which also doesn’t seem likely from the time the data is collected.
@@ -78,25 +78,19 @@ data$Price.for.med.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.fo
 data$Price.for.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.high.speeds..combined))
 data$Price.for.very.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.very.high.speeds..combined))
 
-data$Maximum.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Maximum.advertised.speed.OECD..kbps))
-data$Average.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps))
-data$Average.actual.speed..Akamai..kbps <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps))
-data$Average.download.speedtest.net..kbps <- as.numeric(gsub(",", "", data$Average.download.speedtest.net..kbps))
-data$Average.upload.speedtest.net..kbps <- as.numeric(gsub(",", "", data$Average.upload.speedtest.net..kbps))
+data$Maximum.advertised.speed.OECD..kbps. <- as.numeric(gsub(",", "", data$Maximum.advertised.speed.OECD..kbps.))
+data$Average.advertised.speed.OECD..kbps. <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps.))
+data$Average.actual.speed..Akamai..kbps. <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps.))
+data$Average.download.speedtest.net..kbps. <- as.numeric(gsub(",", "", data$Average.download.speedtest.net..kbps.))
 data$Standard.deviation.download..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.download..speedtest.net))
+data$Average.upload.speedtest.net..kbps. <- as.numeric(gsub(",", "", data$Average.upload.speedtest.net..kbps.))
 data$Standard.deviation.upload..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.upload..speedtest.net))
 data$Standard.deviation.latency..speedtest.net <- as.numeric(gsub(",", "", data$Standard.deviation.latency..speedtest.net))
-data$Median.download..speedtest.net..kbps <- as.numeric(gsub(",", "", data$Median.download..speedtest.net..kbps))
-data$Median.upload..speedtest.net..kbps <- as.numeric(gsub(",", "", data$Median.upload..speedtest.net..kbps))
-data$X90p..Download..speedtest.net..kbps <- as.numeric(gsub(",", "", data$X90p..Download..speedtest.net..kbps))
-data$X90p..Upload..speedtest.net..kbps <- as.numeric(gsub(",", "", data$X90p..Upload..speedtest.net..kbps))
-data$X10p..Latency..speedtest.net <- as.numeric(gsub(",", "", data$X10p..Latency..speedtest.net))
+data$Median.download..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$Median.download..speedtest.net..kbps.))
+data$Median.upload..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$Median.upload..speedtest.net..kbps.))
+data$X90p..Download..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$X90p..Download..speedtest.net..kbps.))
+data$X90p..Upload..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$X90p..Upload..speedtest.net..kbps.))
 ```
-
-```{r}
-data
-```
-
 
 Since we wanted to compare countries who adopted the open access policies against those who don't, we can subset the data to reflect the two subsets.
 
