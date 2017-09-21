@@ -30,28 +30,13 @@ data <- inner_join(penetration, price, by=c("Country", "Country.Code"))
 (data <- inner_join(data, speed, by=c("Country", "Country.Code"="Country.code")))
 ```
 
-Since we wanted to compare countries who adopted the open access policies against those who don't, we can subset the data to reflect the two subsets.
-
-```{r}
-# countries that have not adopted open access policy: United States, Mexico, Slovak Republic
-(non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic")))
-
-# countries that adopted open access policy
-(open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic"))))
-```
-
 ## Describe dataset
 
 ```{r}
 str(data)
 ```
 
-```{r}
-(nrow(non_open_countries))
-(nrow(open_countries))
-```
-
-There are 30 observations of 33 variables. 27 of these observations adopt some form of open access policies while 3 of these observations do not. 
+There are 30 observations of 33 variables. 
 
 ## Evaluate data quality
 
@@ -88,10 +73,10 @@ In order to perform any analysis on the variables, we have to convert several co
 ```{r}
 # Convert to double-precision values 
 
-data$Price.for.low.speeds..combined <- as.numeric(gsub(",", "", data$Price.for.low.speeds..combined))
-data$Price.for.med.speeds..combined <- as.numeric(gsub(",", "", data$Price.for.med.speeds..combined))
-data$Price.for.high.speeds..combined <- as.numeric(gsub(",", "", data$Price.for.high.speeds..combined))
-data$Price.for.very.high.speeds..combined <- as.numeric(gsub(",", "", data$Price.for.very.high.speeds..combined))
+data$Price.for.low.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.low.speeds..combined))
+data$Price.for.med.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.med.speeds..combined))
+data$Price.for.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.high.speeds..combined))
+data$Price.for.very.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.very.high.speeds..combined))
 
 data$Maximum.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Maximum.advertised.speed.OECD..kbps))
 data$Average.advertised.speed.OECD..kbps <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps))
@@ -108,4 +93,82 @@ data$X90p..Upload..speedtest.net..kbps <- as.numeric(gsub(",", "", data$X90p..Up
 data$X10p..Latency..speedtest.net <- as.numeric(gsub(",", "", data$X10p..Latency..speedtest.net))
 ```
 
+```{r}
+data
+```
 
+
+Since we wanted to compare countries who adopted the open access policies against those who don't, we can subset the data to reflect the two subsets.
+
+```{r}
+# countries that have not adopted open access policy: United States, Mexico, Slovak Republic
+(non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic")))
+
+# countries that adopted open access policy
+(open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic"))))
+```
+
+# Univariate Analysis of Key Variables
+
+## Penetration
+
+## Price
+```{r}
+#Summary of Price Categories
+summarise_each(data[, c("", "")])
+```
+Using the summary function, we can see that the Price increases with increased speed. Additionally, the mean price for the dataset lies between the two middle speed options (medium and high). A boxplot will help to better visualize the price data. 
+
+```{r}
+boxplot(Broadband[, 3:6], use.cols = TRUE, names = c("Low Speed", "Medium Speed", "High Speed", "Very High Speed"))
+```
+
+As would be expected, the higher speed broadband is correlated to higher price. What is noticed from the boxplot visualization is that the lower speeds tend to have a smaller standard deviation or spread (quartiles aren't spread out as much). 
+
+```{r}
+#Low Speed Standard Deviation
+sd(Broadband$Price_LowSpeed, na.rm = TRUE)
+
+#Medium Speed Standard Deviation
+sd(Broadband$Price_MedSpeed, na.rm = TRUE)
+
+#High Speed Standard Deviation
+sd(Broadband$Price_HighSpeed, na.rm = TRUE)
+
+#Very High Speed Standard Deviation
+sd(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
+```
+
+As can be observed, the two lower speed categories (low, medium) have an overall lower standard deviation, where the price range for high speed service is more variable. 
+
+Presumably the evolution of high and very high speed networks are newer, and therefore not existent in every country, generating a NA datapoint in those countries where high/very high speed networks aren't available. From the column summaries previously posted, we see that there are between 2-4 missing datapoints per column in the low to high speed variables, but in the very high speed category, there are 13 missing variables.
+
+It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't avialable could be enlightening. 
+
+```{r}
+subcases = is.na(Broadband$Price_VeryHighSpeed)
+
+#Low Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE) > mean(Broadband$Price_LowSpeed, na.rm = TRUE)
+
+#Medium Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE) > mean(Broadband$Price_MedSpeed, na.rm = TRUE)
+
+#High Speed Mean Filtered Dataset:
+mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE)
+mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE) > mean(Broadband$Price_HighSpeed, na.rm = TRUE)
+```
+From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average for that class. 
+
+```{r}
+mapDevice('x11')
+spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
+mapCountryData(spdf, nameColumnToPlot = "Price_MedSpeed", catMethod = "logFixedWidth", colourPalette = "topo")
+
+```
+Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
+
+
+## Speed
