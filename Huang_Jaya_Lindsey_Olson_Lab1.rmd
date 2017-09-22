@@ -18,6 +18,7 @@ library(moments)
 library(gridExtra)
 library(car)
 library(rworldmap)
+library(ggplot2)
 ```
 
 ```{r}
@@ -28,7 +29,7 @@ speed <- read.csv('Speed.csv')
 
 # join the datasets
 data <- inner_join(penetration, price, by=c("Country", "Country.Code"))
-(data <- inner_join(data, speed, by=c("Country", "Country.Code"="Country.code")))
+data <- inner_join(data, speed, by=c("Country", "Country.Code"="Country.code"))
 ```
 
 ## Describe dataset
@@ -57,17 +58,17 @@ For the Price dataset, there are missing values due to countries not having data
 cat("Countries with missing value in column Price.for.low.speeds..combined:",
     subset(data, data$Price.for.low.speeds..combined == '' | is.na(data$Price.for.low.speeds..combined))$Country,
     "\n",
-    sep="  ")
+    sep="\n* ")
 
 cat("Countries with missing value in column Price.for.high.speeds..combined:", 
     subset(data, data$Price.for.high.speeds..combined == '' | is.na(data$Price.for.high.speeds..combined))$Country,
     "\n",
-    sep="  ")
+    sep="\n* ")
 
 cat("Countries with missing value in column Price.for.very.high.speeds..combined:", 
     subset(data, data$Price.for.very.high.speeds..combined == '' | is.na(data$Price.for.very.high.speeds..combined))$Country,
     "\n",
-    sep="  ")
+    sep="\n* ")
 ```
 
 For the speed dataset, we noted that there are four countries (Hungary, Poland, Slovak Republic, Turkey) that did not record their average actual speed, meaning we cannot take these observations into consideration. This is unfortunate because Slovak Republic is one of the three countries that does not adopt the open access policy.
@@ -110,17 +111,11 @@ data$X90p..Upload..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$X90p..U
 Since we wanted to compare countries who adopted the open access policies against those who don't, we can subset the data to reflect the two subsets.
 
 ```{r}
-summary(data)
-```
-
-
-
-```{r}
 # countries that have not adopted open access policy: United States, Mexico, Slovak Republic
-(non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic")))
+non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic"))
 
 # countries that adopted open access policy
-(open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic"))))
+open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic")))
 ```
 
 # Univariate Analysis of Key Variables
@@ -227,12 +222,10 @@ From our analysis, all instances where Very High Speed internet isn't available,
 
 ### TODO: check the map and include the outliers, skewness, and kurtosis
 
-```{r}
 mapDevice()
 spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
 mapCountryData(spdf, nameColumnToPlot = "Price_MedSpeed", catMethod = "logFixedWidth", colourPalette = "topo")
 
-```
 Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
 
 ## Speed
@@ -456,52 +449,182 @@ summary(open_countries$Standard.deviation.latency..speedtest.net)
 
 ## Penetration and Speed
 
- $ Penetration.per.100.OECD..2008            : num  25.4 21.6 28.1 29 17.2 ...
- $ Penetration.per.100.OECD..2007            : num  22.8 19.6 25.8 27.2 14.6 ...
- $ Household.penetration..OECD               : num  52 46.1 56.4 64.2 28.1 ...
- $ X2G.and.3G.penetration.per.100..OECD      : num  102.1 118.5 96.3 62.1 127.3 ...
- $ Penetration.per.100.GC                    : num  28.6 20.9 29.1 26.8 15.7 36.9 31.1 27.5 26.7 13 ...
- $ X3G.penetration.per.100                   : num  55.26 32.37 20.05 6.61 10.19 ...
- $ Growth.in.3G.penetration                  : Factor w/ 30 levels "","0.00%","121.90%",..: 18 14 10 9 6 5 4 3 30 29 ...
- $ Wi.Fi.hotspots..JiWire                    : int  2611 986 2318 3576 429 1206 750 25625 14512 531 ...
- $ Wi.Fi.hotspots.per.100.000..JiWire        : num  12.26 12.02 22.29 10.67 4.21 ...
- $ Percent.of.population.in.urban.areas      : Factor w/ 22 levels "","162%","56%",..: 19 7 22 14 10 18 6 13 11 5 ...
+Network owners in US argues that adopting the open access policies will create a trade-off among price, speed, and penetration. For this reason, we will look into countries that do not adopt open access policies and see if the speed and penetration are reflectively better than countries that do not.
 
+We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare it to the average actual speed (Average.actual.speed..Akamai..kbps.). Then, we will look at the relationship of penetration and  price for medium speed as well as speed and price for medium speed because each country has price for medium speed (Price.for.med.speeds..combined).
 
- $ Maximum.advertised.speed.OECD..kbps.      : Factor w/ 16 levels ""," 1,000,000 ",..: 12 11 6 10 7 4 5 4 15 9 ...
- $ Average.advertised.speed.OECD..kbps.      : Factor w/ 31 levels ""," 1,514 "," 10,292 ",..: 13 3 25 22 4 12 16 20 14 24 ...
- $ Average.actual.speed..Akamai..kbps.       : Factor w/ 27 levels ""," 15,239 ",..: 4 14 22 15 19 20 11 9 13 7 ...
- $ Average.download.speedtest.net..kbps.     : Factor w/ 31 levels ""," 1,377 "," 10,750 ",..: 17 20 24 18 21 30 27 31 29 15 ...
- $ Standard.deviation.download..speedtest.net: Factor w/ 31 levels ""," 10,049 ",..: 22 2 31 23 28 5 10 9 8 16 ...
- $ Average.upload.speedtest.net..kbps.       : Factor w/ 31 levels ""," 1,047 "," 1,099 ",..: 21 31 23 26 10 13 7 5 29 18 ...
- $ Standard.deviation.upload..speedtest.net  : Factor w/ 31 levels ""," 1,263 "," 1,336 ",..: 7 12 10 13 24 29 25 26 9 3 ...
- $ Average.latency.speedtest.net             : num  162 115 87 127 102 100 130 145 123 133 ...
- $ Standard.deviation.latency..speedtest.net : Factor w/ 30 levels ""," 1,199 "," 191 ",..: 28 13 7 21 5 6 16 18 9 10 ...
- $ Median.download..speedtest.net..kbps.     : Factor w/ 31 levels ""," 1,384 "," 1,922 ",..: 8 13 18 15 17 22 16 21 24 10 ...
- $ Median.upload..speedtest.net..kbps.       : Factor w/ 30 levels ""," 1,123 "," 211 ",..: 9 15 13 20 19 28 25 26 22 14 ...
- $ Median.latency..speedtest.net             : int  68 53 42 62 39 43 48 89 61 68 ...
- $ X90p..Download..speedtest.net..kbps.      : Factor w/ 31 levels ""," 10,260 ",..: 3 6 9 29 5 15 12 17 14 2 ...
- $ X90p..Upload..speedtest.net..kbps.        : Factor w/ 31 levels ""," 1,230 "," 1,356 ",..: 25 5 29 31 17 28 11 7 4 23 ...
- $ X10p..Latency..speedtest.net              : int  22 18 18 19 10 11 14 34 21 26 ...
-
+scatter plot with a superimposed smoothed line of prediction. The shaded region embracing the blue line is a representation of the 95% confidence limits for the estimated prediction.
 
 ```{r}
+g1 <- ggplot(data, 
+             aes(x=Penetration.per.100.OECD..2008, y=Average.actual.speed..Akamai..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) + 
+      labs(title="Penetration vs Speed", 
+           x="penetration per 100 inhabitants", 
+           y="average actual speed (kbps)")
+g2 <- ggplot(data, 
+             aes(x=Household.penetration..OECD, y=Average.actual.speed..Akamai..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="Household Penetration vs Speed", 
+           x="penetration (per 100 inhabitants, assuming)", 
+           y="average actual speed (kbps)")
+g3 <- ggplot(data, 
+             aes(x=X3G.penetration.per.100, y=Average.actual.speed..Akamai..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="3G Penetration vs Speed", 
+           x="penetration per 100 inhabitants", 
+           y="average actual speed (kbps)")
+  
+g4 <- ggplot(data, 
+             aes(x=Wi.Fi.hotspots.per.100.000..JiWire, y=Average.actual.speed..Akamai..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="WiFi Hotspots Penetration vs Speed", 
+           x="penetration per 100 inhabitants", 
+           y="average actual speed (kbps)")
 
+grid.arrange(g1, g2, g3, g4, ncol=2, top="Bivariate analysis of penetration and average actual speed")
 ```
 
+```{r}
+with(data, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(data, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(data, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(data, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 
-# For continuous variable (convert to categorical if needed.)
-boxplot(ozone_reading ~ pressure_height, data=ozone, main="Boxplot for Pressure height (continuos var) vs Ozone")
-boxplot(ozone_reading ~ cut(pressure_height, pretty(inputData$pressure_height)), data=ozone, main="Boxplot for Pressure height (categorial) vs Ozone", cex.axis=0.5)
+with(open_countries, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(open_countries, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(open_countries, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 
+with(non_open_countries, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(non_open_countries, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(non_open_countries, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+with(non_open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
+
+sum(is.na(non_open_countries$Penetration.per.100.OECD..2008))
+sum(is.na(non_open_countries$Household.penetration..OECD))
+sum(is.na(non_open_countries$X3G.penetration.per.100))
+sum(is.na(non_open_countries$Wi.Fi.hotspots.per.100.000..JiWire))
+sum(is.na(non_open_countries$Average.actual.speed..Akamai..kbps.))
+```
 
 ## Penetration and Price
 
+```{r}
+g1 <- ggplot(data, 
+             aes(x=Penetration.per.100.OECD..2008, y=Price.for.med.speeds..combined, label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) + 
+      labs(title="Penetration vs Price", 
+           x="penetration per 100 inhabitants", 
+           y="price for medium speed")
+g2 <- ggplot(data, 
+             aes(x=Household.penetration..OECD, y=Price.for.med.speeds..combined, label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="Household Penetration vs Price", 
+           x="penetration (per 100 inhabitants, assuming)", 
+           y="price for medium speed")
+g3 <- ggplot(data, 
+             aes(x=X3G.penetration.per.100, y=Price.for.med.speeds..combined, label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="3G Penetration vs Price", 
+           x="penetration per 100 inhabitants", 
+           y="price for medium speed")
+  
+g4 <- ggplot(data, 
+             aes(x=Wi.Fi.hotspots.per.100.000..JiWire, y=Price.for.med.speeds..combined, label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="WiFi Hotspots Penetration vs Price", 
+           x="penetration per 100 inhabitants", 
+           y="price for medium speed")
+
+grid.arrange(g1, g2, g3, g4, ncol=2, top="Bivariate analysis of penetration and price for medium speed")
+```
+
+```{r}
+with(data, cor(Penetration.per.100.OECD..2008, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(data, cor(Household.penetration..OECD, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(data, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(data, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+with(open_countries, cor(Penetration.per.100.OECD..2008, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(open_countries, cor(Household.penetration..OECD, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(open_countries, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+with(non_open_countries, cor(Penetration.per.100.OECD..2008, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(non_open_countries, cor(Household.penetration..OECD, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(non_open_countries, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+with(non_open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+sum(is.na(non_open_countries$Penetration.per.100.OECD..2008))
+sum(is.na(non_open_countries$Household.penetration..OECD))
+sum(is.na(non_open_countries$X3G.penetration.per.100))
+sum(is.na(non_open_countries$Wi.Fi.hotspots.per.100.000..JiWire))
+sum(is.na(non_open_countries$Price.for.med.speeds..combined))
+```
 ## Speed and Price
 
+```{r}
+ggplot(data, 
+       aes(x=Average.actual.speed..Akamai..kbps., y=Price.for.med.speeds..combined, label=Country.Code)) +
+geom_point(data=open_countries) +
+geom_point(data=non_open_countries, color="red") + 
+geom_smooth() + 
+geom_text(data=non_open_countries, hjust=-1, vjust=1) + 
+labs(title="Bivariate analysis of average actual speed and price for medium speed", 
+     x="speed (kbps)", 
+     y="price for medium speed ($, assuming)")
+```
+
+```{r}
+with(data, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+with(open_countries, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+with(non_open_countries, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
+
+sum(is.na(non_open_countries$Average.actual.speed..Akamai..kbps.))
+sum(is.na(non_open_countries$Price.for.med.speeds..combined))
+```
+
 # Analysis of Secondary Effects
-What secondary variables might have confounding effects on the relationships you have identified? Explain
-how these variables affect your understanding of the data.
+
+For penetration, we do not know if the Household.penetration..OECD was measured in percentages or per 100 inhabitants. We assume it was per 100 inhabitants, but if it was in percentages, our outcomes based on this data are not accurate.
+
+We might be inhibited from understanding the data better because we do not know what Penetration.per.100.GC measure.
+
+For price, we are under the assumption that the price is based on the US dollar. We also assume that the price is converted from the country’s origin to US dollar; otherwise our analysis cannot be relied upon.
+
+For speed, we decided to skip X90p..Download..speedtest.net..kbps., X90p..Upload..speedtest.net..kbps., and X10p..Latency..speedtest.net as we cannot be certain what these data measure. 
+
+Another important aspect to note is how the average actual speed is measured because we do not know for certain if the speed collected reflects 3G speed, WiFi speed, Fiber speed, etc. or all of the above. We also do not know if the average actual speed reflects the download, upload, and latency or just the download speed for example. Also, based on the column header’s name, we do not know how Akamai collect its speed data in comparison to speedtest.net. For this reason, we cannot be certain if the relationships reflected in the analysis are valid unless we are able to explore more on the dataset’s definition of average actual speed.
+
+We also removed outliers in our univariate analysis of speed because we are not certain if the values reflected are the actual or simply bolstered speed. Because we removed these outliers, if the outliers are indeed actual speed reflected in the country, our analysis will reflect speed that is much slower than actual.
+
 
 # Conclusion
 
