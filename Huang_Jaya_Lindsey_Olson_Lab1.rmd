@@ -44,6 +44,10 @@ There are 30 observations of 33 variables.
 ```{r}
 summary(data)
 ```
+```{r}
+summary(data)
+```
+
 
 For the Penetration dataset, we did not include the column with the header “X” because the entire column is filled with missing values represented by NA. 
 
@@ -106,6 +110,12 @@ data$X90p..Upload..speedtest.net..kbps. <- as.numeric(gsub(",", "", data$X90p..U
 Since we wanted to compare countries who adopted the open access policies against those who don't, we can subset the data to reflect the two subsets.
 
 ```{r}
+summary(data)
+```
+
+
+
+```{r}
 # countries that have not adopted open access policy: United States, Mexico, Slovak Republic
 (non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic")))
 
@@ -116,6 +126,41 @@ Since we wanted to compare countries who adopted the open access policies agains
 # Univariate Analysis of Key Variables
 
 ## Penetration
+
+First, wanted to look at summary statistics to see how values vary in units and size and whether there are any clear indications of outliers in each variable.
+
+```{r}
+summary(data[, which(names(data)=="Penetration.per.100.OECD..2008"):which(names(data)=="Percent.of.population.in.urban.areas")])
+```
+* Any column header with “per.100” reflects the number of business and residential lines in a country by the the population of per 100 inhabitants. It is interesting to note that X2G.and.3G.penetration.per.100..OECD have values over 100. We can assume that carriers of mobile devices can flow from one region of 100 inhabitants to another making the data more inflated than it actually is or 2G and 3G group counts a single individual twice if he/she had a mobile carrier that deliver both 2G and 3G, but further investigation is required for its cause.
+* Time of dataset may be an unspoken factor, since Penetration dataset includes information from 2008 and 2007.
+* Growth.in.3G.penetration and Percent.of.population.in.urban.areas are in percent units instead of per 100 inhabitants.
+* It is not clear whether Household.penetration..OECD are in percent units or in number per 100 inhabitants.  
+* Wi.Fi.hotspots..JiWire values have a much higher range than all other variables, but we do not know if that number just reflects the total number of WiFi hotspots available in a given country.
+* Penetration.per.100.OECD..2008 and Penetration.per.100.GC are close in distribution of values. We can assume that the two column are collected in the same year by different groups, but further clarification is necessary.
+
+To start diving deeper into each variable, we looked at the change of Penetration from 2007 to 2008.
+```{r}
+# format the data
+pen2007 <- data.frame(group="2007", value=data$Penetration.per.100.OECD..2007)
+pen2008 <- data.frame(group="2008", value=data$Penetration.per.100.OECD..2008)
+pen <- rbind(pen2007, pen2008)
+
+# plot
+ggplot(pen,
+       aes(x=group, y=value)) + 
+       geom_boxplot() + 
+       labs(title="Penetration per 100 Inhabitants 2007-2008", x="", y="penetration per 100")
+```
+As expected based on the summary stats, there was an increase in overall penetration, demonstrated by the higher mean, median, minimum and maximum. 
+
+```{r}
+Difference <- data$Penetration.per.100.OECD..2008 - data$Penetration.per.100.OECD..2007
+cat("Country with negative growth:\n")
+cat(sprintf("%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Difference < 0)]))
+```
+
+With the exception of Finland all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. Interestingly, Finland shows negative growth of .01 inhabitants per 100 inhabitants. 
 
 ## Price
 
@@ -421,6 +466,34 @@ summary(open_countries$Standard.deviation.latency..speedtest.net)
  $ Wi.Fi.hotspots..JiWire                    : int  2611 986 2318 3576 429 1206 750 25625 14512 531 ...
  $ Wi.Fi.hotspots.per.100.000..JiWire        : num  12.26 12.02 22.29 10.67 4.21 ...
  $ Percent.of.population.in.urban.areas      : Factor w/ 22 levels "","162%","56%",..: 19 7 22 14 10 18 6 13 11 5 ...
+
+
+ $ Maximum.advertised.speed.OECD..kbps.      : Factor w/ 16 levels ""," 1,000,000 ",..: 12 11 6 10 7 4 5 4 15 9 ...
+ $ Average.advertised.speed.OECD..kbps.      : Factor w/ 31 levels ""," 1,514 "," 10,292 ",..: 13 3 25 22 4 12 16 20 14 24 ...
+ $ Average.actual.speed..Akamai..kbps.       : Factor w/ 27 levels ""," 15,239 ",..: 4 14 22 15 19 20 11 9 13 7 ...
+ $ Average.download.speedtest.net..kbps.     : Factor w/ 31 levels ""," 1,377 "," 10,750 ",..: 17 20 24 18 21 30 27 31 29 15 ...
+ $ Standard.deviation.download..speedtest.net: Factor w/ 31 levels ""," 10,049 ",..: 22 2 31 23 28 5 10 9 8 16 ...
+ $ Average.upload.speedtest.net..kbps.       : Factor w/ 31 levels ""," 1,047 "," 1,099 ",..: 21 31 23 26 10 13 7 5 29 18 ...
+ $ Standard.deviation.upload..speedtest.net  : Factor w/ 31 levels ""," 1,263 "," 1,336 ",..: 7 12 10 13 24 29 25 26 9 3 ...
+ $ Average.latency.speedtest.net             : num  162 115 87 127 102 100 130 145 123 133 ...
+ $ Standard.deviation.latency..speedtest.net : Factor w/ 30 levels ""," 1,199 "," 191 ",..: 28 13 7 21 5 6 16 18 9 10 ...
+ $ Median.download..speedtest.net..kbps.     : Factor w/ 31 levels ""," 1,384 "," 1,922 ",..: 8 13 18 15 17 22 16 21 24 10 ...
+ $ Median.upload..speedtest.net..kbps.       : Factor w/ 30 levels ""," 1,123 "," 211 ",..: 9 15 13 20 19 28 25 26 22 14 ...
+ $ Median.latency..speedtest.net             : int  68 53 42 62 39 43 48 89 61 68 ...
+ $ X90p..Download..speedtest.net..kbps.      : Factor w/ 31 levels ""," 10,260 ",..: 3 6 9 29 5 15 12 17 14 2 ...
+ $ X90p..Upload..speedtest.net..kbps.        : Factor w/ 31 levels ""," 1,230 "," 1,356 ",..: 25 5 29 31 17 28 11 7 4 23 ...
+ $ X10p..Latency..speedtest.net              : int  22 18 18 19 10 11 14 34 21 26 ...
+
+
+```{r}
+
+```
+
+
+# For continuous variable (convert to categorical if needed.)
+boxplot(ozone_reading ~ pressure_height, data=ozone, main="Boxplot for Pressure height (continuos var) vs Ozone")
+boxplot(ozone_reading ~ cut(pressure_height, pretty(inputData$pressure_height)), data=ozone, main="Boxplot for Pressure height (categorial) vs Ozone", cex.axis=0.5)
+
 
 ## Penetration and Price
 
