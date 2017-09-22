@@ -17,6 +17,7 @@ library(dplyr)
 library(moments) 
 library(gridExtra)
 library(car)
+library(rworldmap)
 ```
 
 ```{r}
@@ -49,19 +50,29 @@ For the Penetration dataset, we did not include the column with the header “X�
 For the Price dataset, there are missing values due to countries not having data for certain speeds. For instance, Belgium does not have data for its combined price for low speeds. Mexico and Turkey do not have data for their respective combined price for high speeds. Eleven countries do not have data for their respective combined price for very high speeds. 
 
 ```{r}
-# list countries with missing value in column Price.for.low.speeds..combined
-subset(data, data$Price.for.low.speeds..combined == '')$Country
-# list countries with missing value in Price.for.high.speeds..combined
-subset(data, data$Price.for.high.speeds..combined == '')$Country
-# list countries with missing value in Price.for.very.high.speeds..combined
-subset(data, data$Price.for.very.high.speeds..combined == '')$Country
+cat("Countries with missing value in column Price.for.low.speeds..combined:",
+    subset(data, data$Price.for.low.speeds..combined == '' | is.na(data$Price.for.low.speeds..combined))$Country,
+    "\n",
+    sep="  ")
+
+cat("Countries with missing value in column Price.for.high.speeds..combined:", 
+    subset(data, data$Price.for.high.speeds..combined == '' | is.na(data$Price.for.high.speeds..combined))$Country,
+    "\n",
+    sep="  ")
+
+cat("Countries with missing value in column Price.for.very.high.speeds..combined:", 
+    subset(data, data$Price.for.very.high.speeds..combined == '' | is.na(data$Price.for.very.high.speeds..combined))$Country,
+    "\n",
+    sep="  ")
 ```
 
 For the speed dataset, we noted that there are four countries (Hungary, Poland, Slovak Republic, Turkey) that did not record their average actual speed, meaning we cannot take these observations into consideration. This is unfortunate because Slovak Republic is one of the three countries that does not adopt the open access policy.
 
 ```{r}
-# list countries with missing value in Average.actual.speed..Akamai..kbps
-subset(data, data$Average.actual.speed..Akamai..kbps. == '')$Country
+cat("Countries with missing value in column Average.actual.speed..Akamai..kbps.: ", 
+    subset(data, data$Average.actual.speed..Akamai..kbps. == '' | is.na(data$Average.actual.speed..Akamai..kbps.))$Country,
+    "\n",
+    sep="  ")
 ```
 
 Another interesting aspect to note is the apparent outliers that we can see from the data before we begin exploration. Poland has a percent urban population of 162% which doesn’t seem likely. Japan has a maximum advertised speed of 1,000,000 kbps which also doesn’t seem likely from the time the data is collected.
@@ -107,62 +118,317 @@ Since we wanted to compare countries who adopted the open access policies agains
 ## Penetration
 
 ## Price
-```{r}
-#Summary of Price Categories
-summarise_each(data[, c("", "")])
-```
-Using the summary function, we can see that the Price increases with increased speed. Additionally, the mean price for the dataset lies between the two middle speed options (medium and high). A boxplot will help to better visualize the price data. 
 
 ```{r}
-boxplot(Broadband[, 3:6], use.cols = TRUE, names = c("Low Speed", "Medium Speed", "High Speed", "Very High Speed"))
+price_data <- data[, c("Price.for.low.speeds..combined", "Price.for.med.speeds..combined", "Price.for.high.speeds..combined", "Price.for.very.high.speeds..combined")]
+summary(price_data)
 ```
 
-As would be expected, the higher speed broadband is correlated to higher price. What is noticed from the boxplot visualization is that the lower speeds tend to have a smaller standard deviation or spread (quartiles aren't spread out as much). 
+Using the summary function, we can see that price seems to increase with increased speed. A boxplot will help to better visualize this. 
 
 ```{r}
-#Low Speed Standard Deviation
-sd(Broadband$Price_LowSpeed, na.rm = TRUE)
-
-#Medium Speed Standard Deviation
-sd(Broadband$Price_MedSpeed, na.rm = TRUE)
-
-#High Speed Standard Deviation
-sd(Broadband$Price_HighSpeed, na.rm = TRUE)
-
-#Very High Speed Standard Deviation
-sd(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
+boxplot(price_data,
+        las=1, # all axis labels horizontal
+        names=c("low", "medium", "high", "very high"),
+        main="Comparing price for different speeds",
+        xlab="Speed",
+        ylab="Price")
 ```
 
-As can be observed, the two lower speed categories (low, medium) have an overall lower standard deviation, where the price range for high speed service is more variable. 
-
-Presumably the evolution of high and very high speed networks are newer, and therefore not existent in every country, generating a NA datapoint in those countries where high/very high speed networks aren't available. From the column summaries previously posted, we see that there are between 2-4 missing datapoints per column in the low to high speed variables, but in the very high speed category, there are 13 missing variables.
-
-It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't avialable could be enlightening. 
+What is noticed from the boxplot visualization is that the lower speeds tend to have a smaller standard deviation or spread. 
 
 ```{r}
-subcases = is.na(Broadband$Price_VeryHighSpeed)
+# standard deviation for low speed
+sd(data$Price.for.low.speeds..combined, na.rm = TRUE)
 
-#Low Speed Mean Filtered Dataset:
-mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE)
-mean(Broadband[subcases,]$Price_LowSpeed, na.rm = TRUE) > mean(Broadband$Price_LowSpeed, na.rm = TRUE)
+# standard deviation for medium speed
+sd(data$Price.for.med.speeds..combined, na.rm = TRUE)
 
-#Medium Speed Mean Filtered Dataset:
-mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE)
-mean(Broadband[subcases,]$Price_MedSpeed, na.rm = TRUE) > mean(Broadband$Price_MedSpeed, na.rm = TRUE)
+# standard deviation for high speed
+sd(data$Price.for.high.speeds..combined, na.rm = TRUE)
 
-#High Speed Mean Filtered Dataset:
-mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE)
-mean(Broadband[subcases,]$Price_HighSpeed, na.rm = TRUE) > mean(Broadband$Price_HighSpeed, na.rm = TRUE)
+# standard deviation for very high speed
+sd(data$Price.for.very.high.speeds..combined, na.rm = TRUE)
 ```
+
+As can be observed, low and medium speed have an overall lower standard deviation than high or very high speed, which demonstrates that the price range for higher speed service is more variable. 
+
+Presumably the evolution of high and very high speed networks are newer, and therefore not existent in every country, generating a missing (NA) data point in those countries where high/very high speed networks aren't available. From the summaries previously posted, we see that there are more missing data points the faster the speed is: from 1 missing data point in low speed to 11 missing data points in very high speed.
+
+It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't available could be enlightening. The reason why we chose very high speed is discussed earlier in the section; the two countries that do not have data point for high speed are Mexico and Turkey and they also do not have data point for very high speed.
+
+```{r}
+na_very_high_speed <- data[is.na(data$Price.for.very.high.speeds..combined),]
+
+sprintf("Is the low speed mean of the filtered dataset (%s) greater than the average low speed mean (%s)? %s",
+        mean(na_very_high_speed$Price.for.low.speeds..combined, na.rm=TRUE),
+        mean(data$Price.for.low.speeds..combined, na.rm=TRUE),
+        mean(na_very_high_speed$Price.for.low.speeds..combined, na.rm=TRUE) >
+             mean(data$Price.for.low.speeds..combined, na.rm=TRUE))
+sprintf("Is the medium speed mean of the filtered dataset (%s) greater than the average medium speed mean (%s)? %s",
+        mean(na_very_high_speed$Price.for.med.speeds..combined, na.rm=TRUE),
+        mean(data$Price.for.med.speeds..combined, na.rm=TRUE),
+        mean(na_very_high_speed$Price.for.med.speeds..combined, na.rm=TRUE) >
+             mean(data$Price.for.med.speeds..combined, na.rm=TRUE))
+# We understand that this will not include Mexico and Turkey
+sprintf("Is the high speed mean of the filtered dataset (%s) greater than the average high speed mean (%s)? %s",
+        mean(na_very_high_speed$Price.for.high.speeds..combined, na.rm=TRUE),
+        mean(data$Price.for.high.speeds..combined, na.rm=TRUE),
+        mean(na_very_high_speed$Price.for.high.speeds..combined, na.rm=TRUE) >
+             mean(data$Price.for.high.speeds..combined, na.rm=TRUE))
+```
+
 From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average for that class. 
 
+### TODO: check the map and include the outliers, skewness, and kurtosis
+
 ```{r}
-mapDevice('x11')
+mapDevice()
 spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
 mapCountryData(spdf, nameColumnToPlot = "Price_MedSpeed", catMethod = "logFixedWidth", colourPalette = "topo")
 
 ```
 Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
 
-
 ## Speed
+
+We can begin to look at the advertised speed and compare that to the actual speed. As shown in the boxplot below, the advertised speed appears to be significantly higher than the actual speed. Interesting to note is the claim advertisement seems to promise for its maximum advertised speed, going so far as having an outlier of 1,000,000 kbps. It appears to be outside the scope of what the actual speed can deliver. It comes to no surprise then the histogram of maximum advertised speed appears to be more positively skewed in comparison to the histogram of average actual speed. In general, the maximum advertised speed and the average advertised speed have a wider spread due to their respective standard deviation being larger than the average actual speed; it can be assumed that advertisements are not limited by actual hardware limitations in terms of claimed speed. 
+
+```{r}
+# format the data
+max_ad_speed <- data.frame(group="max ad", value=data$Maximum.advertised.speed.OECD..kbps.)
+avg_ad_speed <- data.frame(group="avg ad", value=data$Average.advertised.speed.OECD..kbps.)
+avg_actual_speed <- data.frame(group="avg actual", value=data$Average.actual.speed..Akamai..kbps.)
+ad_speed <- rbind(max_ad_speed, avg_ad_speed, avg_actual_speed)
+
+# plot
+w_outliers <- ggplot(ad_speed,
+                     aes(x=group, y=value)) + 
+              geom_boxplot() + 
+              labs(title="with outliers", x="", y="Speed (kbps)")
+
+# compute lower and upper whisker limits
+max_ad_speed_wo_outliers <- data$Maximum.advertised.speed.OECD..kbps.[!data$Maximum.advertised.speed.OECD..kbps. %in% boxplot.stats(data$Maximum.advertised.speed.OECD..kbps.)$out]
+avg_ad_speed_wo_outliers <- data$Average.advertised.speed.OECD..kbps.[!data$Average.advertised.speed.OECD..kbps. %in% boxplot.stats(data$Average.advertised.speed.OECD..kbps.)$out]
+avg_actual_speed_wo_outliers <- data$Average.actual.speed..Akamai..kbps.[!data$Average.actual.speed..Akamai..kbps. %in% boxplot.stats(data$Average.actual.speed..Akamai..kbps.)$out]
+upper_limit <- max(max_ad_speed_wo_outliers, avg_ad_speed_wo_outliers, avg_actual_speed_wo_outliers, na.rm=TRUE)
+lower_limit <- min(max_ad_speed_wo_outliers, avg_ad_speed_wo_outliers, avg_actual_speed_wo_outliers, na.rm=TRUE)
+
+# plot
+wo_outliers <- ggplot(ad_speed,
+                      aes(x=group, y=value)) + 
+               geom_boxplot(outlier.shape=NA) + 
+               labs(title="without outliers", x="", y="Speed (kbps)") + 
+               coord_cartesian(ylim=c(lower_limit, upper_limit))
+
+grid.arrange(w_outliers, wo_outliers, ncol=2, top="Comparing advertised vs actual speed")
+```
+
+```{r}
+max_h <- ggplot(data=data, 
+                aes(data$Maximum.advertised.speed.OECD..kbps.)) + 
+         geom_histogram() + 
+         labs(title="max advertised", x="")
+
+avg_h <- ggplot(data=data,
+                aes(data$Average.advertised.speed.OECD..kbps.)) + 
+         geom_histogram() + 
+         labs(title="avg advertised", x="")
+
+act_h <- ggplot(data=data,
+                aes(data$Average.actual.speed..Akamai..kbps.)) + 
+         geom_histogram() + 
+         labs(title="avg actual", x="")
+grid.arrange(max_h, avg_h, act_h, ncol=3, top="Histograms of advertised vs actual speed")
+```
+
+```{r}
+cat("Number of outliers for maximum advertised speed: ",
+    length(boxplot.stats(data$Maximum.advertised.speed.OECD..kbps.)$out))
+cat("\nNumber of outliers for average advertised speed: ", 
+    length(boxplot.stats(data$Average.advertised.speed.OECD..kbps.)$out))
+cat("\nNumber of outliers for average actual speed: ", 
+    length(boxplot.stats(data$Average.actual.speed..Akamai..kbps.)$out))
+cat("\nSkewness of maximum advertised speed without outliers: ",
+    skewness(max_ad_speed_wo_outliers))
+cat("\nSkewness of average advertised speed without outliers: ", 
+    skewness(avg_ad_speed_wo_outliers))
+cat("\nSkewness of average actual speed without outliers: ", 
+    skewness(avg_actual_speed_wo_outliers, na.rm=TRUE))
+cat("\nStandard deviation of maximum advertised speed without outliers: ",
+    sd(max_ad_speed_wo_outliers))
+cat("\nStandard deviation of average advertised speed without outliers: ", 
+    sd(avg_ad_speed_wo_outliers))
+cat("\nStandard deviation of average actual speed without outliers: ", 
+    sd(avg_actual_speed_wo_outliers, na.rm=TRUE))
+```
+
+What would be interesting to determine is to see if the advertised speed would be significantly higher in countries that do not adopt open source policies compared to countries that do. Although we have verified that outliers such as Japan and Korea have faster internet speed in general, we removed them while creating the boxplot for better visual clarity. What we have found out is that although countries that do not adopt open access policy do not appear to advertise internet speed higher than the other OECD countries, they do in general have a lower average actual speed. The data is not thoroughly conclusive as Slovak Republic do not have its actual average speed reported.  
+
+```{r}
+cat("Countries that adopt open access policy:\n")
+cat("Number of outliers for average advertised speed: ",
+    subset(data, Average.advertised.speed.OECD..kbps. %in%
+             boxplot.stats(open_countries$Average.advertised.speed.OECD..kbps.)$out)$Country,
+    "\n",
+    sep="  ")
+cat("Number of outliers for average advertised speed: ",
+    subset(data, Average.actual.speed..Akamai..kbps. %in%
+             boxplot.stats(open_countries$Average.actual.speed..Akamai..kbps.)$out)$Country,
+    "\n",
+    sep="  ")
+
+cat("\nCountries that do not adopt open access policy:\n")
+cat("Number of outliers for average advertised speed: ", length(boxplot.stats(non_open_countries$Average.advertised.speed.OECD..kbps.)$out))
+cat("\nNumber of outliers for average advertised speed: ", length(boxplot.stats(non_open_countries$Average.actual.speed..Akamai..kbps.)$out))
+```
+
+
+```{r}
+# format the data
+avg_ad_speed <- data.frame(group="avg ad", value=open_countries$Average.advertised.speed.OECD..kbps.)
+avg_actual_speed <- data.frame(group="avg actual", value=open_countries$Average.actual.speed..Akamai..kbps.)
+o_ad_speed <- rbind(avg_ad_speed, avg_actual_speed)
+
+avg_ad_speed <- data.frame(group="avg ad", value=non_open_countries$Average.advertised.speed.OECD..kbps.)
+avg_actual_speed <- data.frame(group="avg actual", value=non_open_countries$Average.actual.speed..Akamai..kbps.)
+no_ad_speed <- rbind(avg_ad_speed, avg_actual_speed)
+
+# compute lower and upper whisker limits
+o_avg_ad_speed_wo_outliers <- open_countries$Average.advertised.speed.OECD..kbps.[!open_countries$Average.advertised.speed.OECD..kbps. %in% boxplot.stats(open_countries$Average.advertised.speed.OECD..kbps.)$out]
+o_avg_actual_speed_wo_outliers <- open_countries$Average.actual.speed..Akamai..kbps.[!open_countries$Average.actual.speed..Akamai..kbps. %in% boxplot.stats(open_countries$Average.actual.speed..Akamai..kbps.)$out]
+
+no_avg_ad_speed_wo_outliers <- non_open_countries$Average.advertised.speed.OECD..kbps.[!non_open_countries$Average.advertised.speed.OECD..kbps. %in% boxplot.stats(non_open_countries$Average.advertised.speed.OECD..kbps.)$out]
+no_avg_actual_speed_wo_outliers <- non_open_countries$Average.actual.speed..Akamai..kbps.[!non_open_countries$Average.actual.speed..Akamai..kbps. %in% boxplot.stats(non_open_countries$Average.actual.speed..Akamai..kbps.)$out]
+
+upper_limit <- max(o_avg_ad_speed_wo_outliers, o_avg_actual_speed_wo_outliers, 
+                   no_avg_ad_speed_wo_outliers, no_avg_actual_speed_wo_outliers, na.rm=TRUE)
+lower_limit <- min(o_avg_ad_speed_wo_outliers, o_avg_actual_speed_wo_outliers, 
+                   no_avg_ad_speed_wo_outliers, no_avg_actual_speed_wo_outliers, na.rm=TRUE)
+
+boxplot_o <- ggplot(o_ad_speed,
+                    aes(x=group, y=value)) + 
+             geom_boxplot(outlier.shape=NA) + 
+             labs(title="open policy without outliers", x="", y="Speed (kbps)") + 
+             coord_cartesian(ylim=c(lower_limit, upper_limit))
+
+boxplot_no <- ggplot(no_ad_speed,
+                     aes(x=group, y=value)) + 
+              geom_boxplot(outlier.shape=NA) + 
+              labs(title="non-open policy without outliers", x="", y="Speed (kbps)") + 
+              coord_cartesian(ylim=c(lower_limit, upper_limit))
+ 
+grid.arrange(boxplot_o, boxplot_no, ncol=2, top="Comparing advertised vs actual speed")
+```
+
+The mean of the average download speedtest is higher than the median download speedtest, which tells us that the download speed might be positively skewed. The same can be said for latency and upload speed. In this aspect, countries that adopt open access policy do not seem to differ from countries that do not adopt open access policy.
+
+We can roughly estimate that upload speed have more variability than latency which in turn have more variability than download speed, but without the full data to verify, this is just a rough estimate based on comparing the standard deviation to the mean. Again, in this aspect, countries that adopt open access policy do not seem to differ from countries that do not adopt open access policy.
+
+```{r}
+# Download
+cat("Summary of average download speedtest:\n")
+summary(data$Average.download.speedtest.net..kbps.)
+cat("\nSummary of median download speedtest:\n")
+summary(data$Median.download..speedtest.net..kbps.)
+cat("\nStandard deviation of download speedtest:\n")
+summary(data$Standard.deviation.download..speedtest.net)
+
+# Upload
+cat("\nSummary of average upload speedtest:\n")
+summary(data$Average.upload.speedtest.net..kbps.)
+cat("\nSummary of median upload speedtest:\n")
+summary(data$Median.upload..speedtest.net..kbps.)
+cat("\nStandard deviation of upload speedtest:\n")
+summary(data$Standard.deviation.upload..speedtest.net)
+
+# Latency
+cat("\nSummary of average latency speedtest:\n")
+summary(data$Average.latency.speedtest.net)
+cat("\nSummary of median latency speedtest:\n")
+summary(data$Median.latency..speedtest.net)
+cat("\nStandard deviation of latency speedtest:\n")
+summary(data$Standard.deviation.latency..speedtest.net)
+```
+
+```{r}
+cat("Countries that adopt open access policy: ")
+
+# Download
+cat("Summary of average download speedtest:\n")
+summary(open_countries$Average.download.speedtest.net..kbps.)
+cat("\nSummary of median download speedtest:\n")
+summary(open_countries$Median.download..speedtest.net..kbps.)
+cat("\nStandard deviation of download speedtest:\n")
+summary(open_countries$Standard.deviation.download..speedtest.net)
+
+# Upload
+cat("\nSummary of average upload speedtest:\n")
+summary(open_countries$Average.upload.speedtest.net..kbps.)
+cat("\nSummary of median upload speedtest:\n")
+summary(open_countries$Median.upload..speedtest.net..kbps.)
+cat("\nStandard deviation of upload speedtest:\n")
+summary(open_countries$Standard.deviation.upload..speedtest.net)
+
+# Latency
+cat("\nSummary of average latency speedtest:\n")
+summary(open_countries$Average.latency.speedtest.net)
+cat("\nSummary of median latency speedtest:\n")
+summary(open_countries$Median.latency..speedtest.net)
+cat("\nStandard deviation of latency speedtest:\n")
+summary(open_countries$Standard.deviation.latency..speedtest.net)
+```
+
+```{r}
+cat("Countries that do not adopt open access policy: ")
+
+# Download
+cat("Summary of average download speedtest:\n")
+summary(non_open_countries$Average.download.speedtest.net..kbps.)
+cat("\nSummary of median download speedtest:\n")
+summary(non_open_countries$Median.download..speedtest.net..kbps.)
+cat("\nStandard deviation of download speedtest:\n")
+summary(non_open_countries$Standard.deviation.download..speedtest.net)
+
+# Upload
+cat("\nSummary of average upload speedtest:\n")
+summary(non_open_countries$Average.upload.speedtest.net..kbps.)
+cat("\nSummary of median upload speedtest:\n")
+summary(non_open_countries$Median.upload..speedtest.net..kbps.)
+cat("\nStandard deviation of upload speedtest:\n")
+summary(open_countries$Standard.deviation.upload..speedtest.net)
+
+# Latency
+cat("\nSummary of average latency speedtest:\n")
+summary(non_open_countries$Average.latency.speedtest.net)
+cat("\nSummary of median latency speedtest:\n")
+summary(non_open_countries$Median.latency..speedtest.net)
+cat("\nStandard deviation of latency speedtest:\n")
+summary(open_countries$Standard.deviation.latency..speedtest.net)
+```
+
+# Analysis of Key Relationships
+
+## Penetration and Speed
+
+ $ Penetration.per.100.OECD..2008            : num  25.4 21.6 28.1 29 17.2 ...
+ $ Penetration.per.100.OECD..2007            : num  22.8 19.6 25.8 27.2 14.6 ...
+ $ Household.penetration..OECD               : num  52 46.1 56.4 64.2 28.1 ...
+ $ X2G.and.3G.penetration.per.100..OECD      : num  102.1 118.5 96.3 62.1 127.3 ...
+ $ Penetration.per.100.GC                    : num  28.6 20.9 29.1 26.8 15.7 36.9 31.1 27.5 26.7 13 ...
+ $ X3G.penetration.per.100                   : num  55.26 32.37 20.05 6.61 10.19 ...
+ $ Growth.in.3G.penetration                  : Factor w/ 30 levels "","0.00%","121.90%",..: 18 14 10 9 6 5 4 3 30 29 ...
+ $ Wi.Fi.hotspots..JiWire                    : int  2611 986 2318 3576 429 1206 750 25625 14512 531 ...
+ $ Wi.Fi.hotspots.per.100.000..JiWire        : num  12.26 12.02 22.29 10.67 4.21 ...
+ $ Percent.of.population.in.urban.areas      : Factor w/ 22 levels "","162%","56%",..: 19 7 22 14 10 18 6 13 11 5 ...
+
+## Penetration and Price
+
+## Speed and Price
+
+# Analysis of Secondary Effects
+What secondary variables might have confounding effects on the relationships you have identified? Explain
+how these variables affect your understanding of the data.
+
+# Conclusion
+
