@@ -9,6 +9,15 @@ output: pdf_document
 ## Our motivation
 We are motivated to investigate the three-way relationship between price, speed, and penetration to see if there are any trade-off that exists between these concepts. By doing so, we can determine if countries that had not adopted some form of open access policies (such as United States, Mexico, and Slovak Republic) have network industry with better performance than other OECD countries that are regulated with open access policies. We use the metrics speed and penetration as a way to compare the performance of a network industry.
 
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
 ## Load dataset
 
 ```{r}
@@ -38,17 +47,13 @@ data <- inner_join(data, speed, by=c("Country", "Country.Code"="Country.code"))
 str(data)
 ```
 
-There are 30 observations of 33 variables. 
+There are 30 observations of 32 variables. 
 
 ## Evaluate data quality
 
 ```{r}
 summary(data)
 ```
-```{r}
-summary(data)
-```
-
 
 For the Penetration dataset, we did not include the column with the header “X” because the entire column is filled with missing values represented by NA. 
 
@@ -132,15 +137,15 @@ summary(data[, which(names(data)=="Penetration.per.100.OECD..2008"):which(names(
 * Any column header with “per.100” reflects the number of business and residential lines in a country by the the population of per 100 inhabitants. It is interesting to note that X2G.and.3G.penetration.per.100..OECD have values over 100. We can assume that carriers of mobile devices can flow from one region of 100 inhabitants to another making the data more inflated than it actually is or 2G and 3G group counts a single individual twice if he/she had a mobile carrier that deliver both 2G and 3G, but further investigation is required for its cause.
 * Time of dataset may be an unspoken factor, since Penetration dataset includes information from 2008 and 2007.
 * Growth.in.3G.penetration and Percent.of.population.in.urban.areas are in percent units instead of per 100 inhabitants.
-* It is not clear whether Household.penetration..OECD are in percent units or in number per 100 inhabitants.  
-* Wi.Fi.hotspots..JiWire values have a much higher range than all other variables, but we do not know if that number just reflects the total number of WiFi hotspots available in a given country.
+* It is not clear whether Household.penetration..OECD are in percent units or in number per 100 inhabitants. We will assume that it is per 100 inhabitants.
+* Wi.Fi.hotspots..JiWire values have a much higher range than all other variables. Thus this number may reflect the total number of WiFi hotspots available in a given country, rather than per 100 inhabitants.
 * Penetration.per.100.OECD..2008 and Penetration.per.100.GC are close in distribution of values. We can assume that the two column are collected in the same year by different groups, but further clarification is necessary.
 
 First, we wanted to look at the relationship between each of the Penetration variables.
 ```{r}
 plot(data[,which(names(data)=="Penetration.per.100.OECD..2008"):which(names(data)=="Percent.of.population.in.urban.areas")])
 ```
-From the above results, it appears that Penetration per 100 inhabitants OECD 2007 and 2008, Penetration per 100GC and Penetration per 100 Households have stronger correlations than any other variables.
+<br /> From the above results, it appears that Penetration per 100 inhabitants OECD 2007 and 2008, Penetration per 100GC and Penetration per 100 Households have stronger correlations than any other variables.
 
 Given the strong correlation, we decided to look at the change of Penetration from 2007 to 2008.
 ```{r}
@@ -160,11 +165,14 @@ As expected based on the summary stats, there was an increase in overall penetra
 To look into it a little deeper, we looked at the difference in values between 2007 and 2008.
 ```{r}
 Difference <- data$Penetration.per.100.OECD..2008 - data$Penetration.per.100.OECD..2007
+Difference
+```
+Interestingly enough, there is one country that experienced negative growth.
+```{r}
 cat("Country with negative growth:\n")
 cat(sprintf("%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Difference < 0)]))
 ```
-
-With the exception of Finland all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. Interestingly, Finland shows negative growth of .01 inhabitants per 100 inhabitants. 
+The country Finland showed negative growth of .01 inhabitants per 100 inhabitants. However, all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. 
 
 Next, we were interested in looking at the difference between penetration per 100 inhabitants versus penetration by household. 
 ```{r}
@@ -261,9 +269,11 @@ From our analysis, all instances where Very High Speed internet isn't available,
 
 ### TODO: check the map and include the outliers, skewness, and kurtosis
 
-mapDevice()
-spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
-mapCountryData(spdf, nameColumnToPlot = "Price_MedSpeed", catMethod = "logFixedWidth", colourPalette = "topo")
+```{r}
+#mapDevice()
+#spdf <- joinCountryData2Map(Broadband, joinCode = "NAME", nameJoinColumn = "Country")
+#mapCountryData(spdf, nameColumnToPlot = "Price_MedSpeed", catMethod = "logFixedWidth", colourPalette = "topo")
+```
 
 Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
 
@@ -486,13 +496,12 @@ summary(open_countries$Standard.deviation.latency..speedtest.net)
 
 # Analysis of Key Relationships
 
-## Penetration and Speed
-
 Network owners in US argues that adopting the open access policies will create a trade-off among price, speed, and penetration. For this reason, we will look into countries that do not adopt open access policies and see if the speed and penetration are reflectively better than countries that do not.
 
-We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare it to the average actual speed (Average.actual.speed..Akamai..kbps.). Then, we will look at the relationship of penetration and  price for medium speed as well as speed and price for medium speed because each country has price for medium speed (Price.for.med.speeds..combined).
+We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare it to the average actual speed (Average.actual.speed..Akamai..kbps.). Then, we will look at the relationship of penetration and  price for medium speed as well as speed and price for medium speed since the data for price for medium speed is most complete. (Price.for.med.speeds..combined).
 
-scatter plot with a superimposed smoothed line of prediction. The shaded region embracing the blue line is a representation of the 95% confidence limits for the estimated prediction.
+## Penetration and Speed
+Looking at Penetration vs. Speed we wanted to explore what impacts penetration had on speed and what relationships if any existed between the two. For the purposes of this bivariate analysis we looked at the most recent Penetration OECD data (2008). 
 
 ```{r}
 g1 <- ggplot(data, 
@@ -535,29 +544,17 @@ g4 <- ggplot(data,
 
 grid.arrange(g1, g2, g3, g4, ncol=2, top="Bivariate analysis of penetration and average actual speed")
 ```
+According to the graphs above, MX is relatively lower than all countries across all variables, including penetration per household, 3G penetration and number of WiFi hotspots. 
+
+The U.S. is around the middle for all variables except WiFi hotspots, for which it seems to be among the top 10 with the highest number.
 
 ```{r}
 with(data, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 with(data, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 with(data, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 with(data, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-
-with(open_countries, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(open_countries, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(open_countries, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-
-with(non_open_countries, cor(Penetration.per.100.OECD..2008, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(non_open_countries, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(non_open_countries, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-with(non_open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
-
-sum(is.na(non_open_countries$Penetration.per.100.OECD..2008))
-sum(is.na(non_open_countries$Household.penetration..OECD))
-sum(is.na(non_open_countries$X3G.penetration.per.100))
-sum(is.na(non_open_countries$Wi.Fi.hotspots.per.100.000..JiWire))
-sum(is.na(non_open_countries$Average.actual.speed..Akamai..kbps.))
 ```
+Overall, there appears to be a positive correlation between Penetration.per.100.OECD..2008, Household.penetration..OECD, X3G.penetration.per.100 and Wi.Fi.hotspots.per.100.000 and speed, with the correlation being highest between Household Penetration and Average actual speed. 
 
 ## Penetration and Price
 
@@ -602,13 +599,18 @@ g4 <- ggplot(data,
 
 grid.arrange(g1, g2, g3, g4, ncol=2, top="Bivariate analysis of penetration and price for medium speed")
 ```
+In terms of price, MX again with its low value of penetration, has among the top 3 most expensive prices for medium speed.
 
+Slovak Rep. and the U.S. seem to have penetration and price values around the middle for penetration per household and 3g penetration. U.S. has a higher penetration and wifi penetration per 100 inhabitants, but its price seems to remain within $10 of Slovak Rep.‘s prices.
 ```{r}
 with(data, cor(Penetration.per.100.OECD..2008, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(data, cor(Household.penetration..OECD, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(data, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(data, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
-
+```
+Overall, there appears to be a negative correlation between Penetration.per.100.OECD..2008, Household.penetration..OECD, X3G.penetration.per.100 and Wi.Fi.hotspots.per.100.000 and price for medium speed, with the negative correlation being highest between Penetration.per.100.OECD..2008 and Price for Medium Speed. 
+ 
+```{r}
 with(open_countries, cor(Penetration.per.100.OECD..2008, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(open_countries, cor(Household.penetration..OECD, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(open_countries, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
@@ -619,12 +621,9 @@ with(non_open_countries, cor(Household.penetration..OECD, Price.for.med.speeds..
 with(non_open_countries, cor(X3G.penetration.per.100, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 with(non_open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 
-sum(is.na(non_open_countries$Penetration.per.100.OECD..2008))
-sum(is.na(non_open_countries$Household.penetration..OECD))
-sum(is.na(non_open_countries$X3G.penetration.per.100))
-sum(is.na(non_open_countries$Wi.Fi.hotspots.per.100.000..JiWire))
-sum(is.na(non_open_countries$Price.for.med.speeds..combined))
 ```
+When comparing the correlation between the Penetration variables and Price for Medium Speeds for Open-Access and Non Open-Access countries, there seems to be a higher negative correlation for Non-Open Access countries. However, these results may be due to the limited dataset, 
+
 ## Speed and Price
 
 ```{r}
@@ -652,9 +651,11 @@ sum(is.na(non_open_countries$Price.for.med.speeds..combined))
 
 # Analysis of Secondary Effects
 
-For penetration, we do not know if the Household.penetration..OECD was measured in percentages or per 100 inhabitants. We assume it was per 100 inhabitants, but if it was in percentages, our outcomes based on this data are not accurate.
+There are many secondary effects we need to consider, given the lack of measurement details for the dataset.
 
-We might be inhibited from understanding the data better because we do not know what Penetration.per.100.GC measure.
+For penetration, we do not know if the Household.penetration..OECD was measured in percentages or per 100 households. We assume it was per 100 households, but if it was in percentages, our outcomes based on this data are not accurate.
+
+Most penetration metrics is measured on a per household/inhabitat basis. This insight brings to question whether or not the measurement of penetration has more to do with population density vs absolute coverage. Intuitively a more densely populated area is more advantageous for a broadband company to establish service because there is a higher number of users per infrastructure. The United States is an outlier in the data, while it has a Wifi_Hotspot_Per_100000 that is within one standard deviation of the mean, it has a Wifi_Hotspot metric that is nearly ten times the category mean. Because of the size of the United States it has a high number of Wifi Hotspots.
 
 For price, we are under the assumption that the price is based on the US dollar. We also assume that the price is converted from the country’s origin to US dollar; otherwise our analysis cannot be relied upon.
 
@@ -667,3 +668,6 @@ We also removed outliers in our univariate analysis of speed because we are not 
 
 # Conclusion
 
+In summary, the key relationships that we observed from our exploratory analysis were a positive correlation between a country's penetration variables and average actual speed offered and a negative correlation with price for medium speed.
+
+Comparing countries who have adopted an open access policy to those who have not, in 82% of the categories measured in the dataset, the Open Access countries had a superior mean. Superior is interpreted to be high speed, larger penetration and smaller price variables. As previously mentioned, conclusive analysis cannot be carried out due to the limited size of the Non-Open Access dataset. However, from the analysis performed, Open Access Countries appear to provide superior Broadband metrics to their citizens. 
