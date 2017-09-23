@@ -88,6 +88,8 @@ In order to perform any analysis on the variables, we have to convert several co
 
 ```{r}
 # Convert to double-precision values 
+data$Growth.in.3G.penetration <- as.numeric(gsub("[%,]", "", data$Growth.in.3G.penetration))
+data$Percent.of.population.in.urban.areas <- as.numeric(gsub("[%,]", "", data$Percent.of.population.in.urban.areas))
 
 data$Price.for.low.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.low.speeds..combined))
 data$Price.for.med.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.med.speeds..combined))
@@ -134,7 +136,13 @@ summary(data[, which(names(data)=="Penetration.per.100.OECD..2008"):which(names(
 * Wi.Fi.hotspots..JiWire values have a much higher range than all other variables, but we do not know if that number just reflects the total number of WiFi hotspots available in a given country.
 * Penetration.per.100.OECD..2008 and Penetration.per.100.GC are close in distribution of values. We can assume that the two column are collected in the same year by different groups, but further clarification is necessary.
 
-To start diving deeper into each variable, we looked at the change of Penetration from 2007 to 2008.
+First, we wanted to look at the relationship between each of the Penetration variables.
+```{r}
+plot(data[,which(names(data)=="Penetration.per.100.OECD..2008"):which(names(data)=="Percent.of.population.in.urban.areas")])
+```
+From the above results, it appears that Penetration per 100 inhabitants OECD 2007 and 2008, Penetration per 100GC and Penetration per 100 Households have stronger correlations than any other variables.
+
+Given the strong correlation, we decided to look at the change of Penetration from 2007 to 2008.
 ```{r}
 # format the data
 pen2007 <- data.frame(group="2007", value=data$Penetration.per.100.OECD..2007)
@@ -147,8 +155,9 @@ ggplot(pen,
        geom_boxplot() + 
        labs(title="Penetration per 100 Inhabitants 2007-2008", x="", y="penetration per 100")
 ```
-As expected based on the summary stats, there was an increase in overall penetration, demonstrated by the higher mean, median, minimum and maximum. 
+As expected based on the summary stats, there was an increase in overall penetration, demonstrated by the higher median, minimum and maximum. 
 
+To look into it a little deeper, we looked at the difference in values between 2007 and 2008.
 ```{r}
 Difference <- data$Penetration.per.100.OECD..2008 - data$Penetration.per.100.OECD..2007
 cat("Country with negative growth:\n")
@@ -156,6 +165,36 @@ cat(sprintf("%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Di
 ```
 
 With the exception of Finland all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. Interestingly, Finland shows negative growth of .01 inhabitants per 100 inhabitants. 
+
+Next, we were interested in looking at the difference between penetration per 100 inhabitants versus penetration by household. 
+```{r}
+# format the data
+pen2007 <-data.frame(group="2007",value=data$Penetration.per.100.OECD..2007)
+pen2008 <- data.frame(group="2008", value=data$Penetration.per.100.OECD..2008)
+penhouse <-data.frame(group="household",value=data$Household.penetration..OECD)
+pen_house <-rbind(pen2007, pen2008, penhouse)
+# plot
+ggplot(pen_house,aes(x=group, y=value)) +geom_boxplot() +labs(title="Penetration per 100 Inhabitants 2007/2008 vs. per 100 Household", x="", y="Penetration per 100")
+```
+Looking at the distribution for each boxplot, Penetration per 100 inhabitants for both 2007 and 2008 have a smaller range and a lower median than Penetration per Household. Upon further reading on the OECD website, penetration by household may be higher since it includes some connections to businesses.
+
+Though there didn't appear to be a correlation between penetration per 100 inhabitants and 2G or 3G penetration, we wanted to see if there may be a relationship between the growth rates.
+
+```{r}
+# add new column that calculates penetration growth from 2007 to 2008
+data$Penetration_OECD_Growth <- (Difference/data$Penetration.per.100.OECD..2007)*100
+pen_growth <-data.frame(group="general",value=data$Penetration_OECD_Growth)
+growth_3g <- data.frame(group="3g", value=data$Growth.in.3G.penetration)
+
+pen_growth <-rbind(pen_growth, growth_3g)
+# plot
+ggplot(pen_growth,aes(x=group, y=value)) +geom_boxplot() +labs(title="Penetration Growth: General vs. 3G", x="", y="in Percent")
+```
+General growth appeared much lower than 3G growth, and there appears to be a slightly negative correlation between the two. However, since we don't know the time range for the Growth in 3G penetration variable, we cannot draw any conclusions.
+```{r}
+cor(data[,c("Penetration_OECD_Growth","Growth.in.3G.penetration")],use = "complete.obs")
+```
+
 
 ## Price
 
