@@ -262,19 +262,19 @@ sprintf("Is the high speed mean of the filtered dataset (%s) greater than the av
 
 From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average for that class. 
 
-```{r}
+TODO: FIX THIS!
 hist(Broadband$Price_MedSpeed,
      main = "Histogram of the Medium Speed Price Variable",
      xlab = "Price (Medium Speed Tier)",
      col = 'gray',
      prob = T)
 lines(density(Broadband$Price_MedSpeed, na.rm = TRUE), col = 'blue')
-```
+
 The histogram above displays the medium speed price variable. As can be observed there is a large tail associated with higher prices. Additionally, there is a large number of countries who have prices near the mean (41.45). 
 
 A positive value for skewness can be interpreted that there is a tail on the right side with respect to the Medium Speed Price Variable (a number of countries have dispraportionally high prices compared to the median forcing the mean to be higher). The kurtosis variable is positive meaning that it is leptokuric meaning that there is a high peak and fat tails.
 
-```{r}
+TODO: FIX THIS
 #Low Speed Variables
 skewness(Broadband$Price_LowSpeed, na.rm = TRUE)
 kurtosis(Broadband$Price_LowSpeed, na.rm = TRUE)
@@ -287,17 +287,17 @@ kurtosis(Broadband$Price_HighSpeed, na.rm = TRUE)
 #Very High Speed Variables
 skewness(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
 kurtosis(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
-```
+
 The three lower speed tiers have similar skewness and kurtosis trends. In the Very-High-Speed category, which has a larger number of NA variables, we see that the skewness measurement is closer to zero (or distribution has more symmetry). Also the kurtosis number is smaller. While the very High Speed Price variable is still 'fat-tailed' it more-so resembles a normal distribution in comparison to the other price variables. 
 
-```{r}
+TODO: FIX THIS
 hist(Broadband$Price_VeryHighSpeed,
      main = "Histogram of the Medium Speed Price Variable",
      xlab = "Price (Very High Speed Tier)",
      col = 'gray',
      prob = T)
 lines(density(Broadband$Price_VeryHighSpeed, na.rm = TRUE), col = 'blue')
-```
+
 The variance in distribution may be caused by the fact that there are fewer data points in the Very High Speed Category.
 
 ```{r message=FALSE}
