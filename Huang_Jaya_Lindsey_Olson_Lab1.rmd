@@ -20,17 +20,16 @@ opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
 ## Load dataset
 
+We combine the three datasets by performing an inner join on country's name and code because if the country did not have a name or a respective code, it is not a valid country.
+
 ```{r}
 # include the packages
 library(dplyr) 
 library(moments) 
 library(gridExtra)
-library(car)
 library(rworldmap)
 library(ggplot2)
-```
 
-```{r}
 # load the datasets
 penetration <- read.csv('Penetration.csv')
 price <- read.csv('Price.csv')
@@ -62,17 +61,14 @@ For the Price dataset, there are missing values due to countries not having data
 ```{r}
 cat("Countries with missing value in column Price.for.low.speeds..combined:",
     subset(data, data$Price.for.low.speeds..combined == '' | is.na(data$Price.for.low.speeds..combined))$Country,
-    "\n",
     sep="\n* ")
 
 cat("Countries with missing value in column Price.for.high.speeds..combined:", 
     subset(data, data$Price.for.high.speeds..combined == '' | is.na(data$Price.for.high.speeds..combined))$Country,
-    "\n",
     sep="\n* ")
 
 cat("Countries with missing value in column Price.for.very.high.speeds..combined:", 
     subset(data, data$Price.for.very.high.speeds..combined == '' | is.na(data$Price.for.very.high.speeds..combined))$Country,
-    "\n",
     sep="\n* ")
 ```
 
@@ -81,8 +77,7 @@ For the speed dataset, we noted that there are four countries (Hungary, Poland, 
 ```{r}
 cat("Countries with missing value in column Average.actual.speed..Akamai..kbps.: ", 
     subset(data, data$Average.actual.speed..Akamai..kbps. == '' | is.na(data$Average.actual.speed..Akamai..kbps.))$Country,
-    "\n",
-    sep="  ")
+    sep="\n* ")
 ```
 
 Another interesting aspect to note is the apparent outliers that we can see from the data before we begin exploration. Poland has a percent urban population of 162% which doesn’t seem likely. Japan has a maximum advertised speed of 1,000,000 kbps which also doesn’t seem likely from the time the data is collected.
@@ -92,15 +87,13 @@ Another interesting aspect to note is the apparent outliers that we can see from
 In order to perform any analysis on the variables, we have to convert several columns of type factors into type numeric.
 
 ```{r}
-# Convert to double-precision values 
+# convert to double-precision values 
 data$Growth.in.3G.penetration <- as.numeric(gsub("[%,]", "", data$Growth.in.3G.penetration))
 data$Percent.of.population.in.urban.areas <- as.numeric(gsub("[%,]", "", data$Percent.of.population.in.urban.areas))
-
 data$Price.for.low.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.low.speeds..combined))
 data$Price.for.med.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.med.speeds..combined))
 data$Price.for.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.high.speeds..combined))
 data$Price.for.very.high.speeds..combined <- as.numeric(gsub("[$,]", "", data$Price.for.very.high.speeds..combined))
-
 data$Maximum.advertised.speed.OECD..kbps. <- as.numeric(gsub(",", "", data$Maximum.advertised.speed.OECD..kbps.))
 data$Average.advertised.speed.OECD..kbps. <- as.numeric(gsub(",", "", data$Average.advertised.speed.OECD..kbps.))
 data$Average.actual.speed..Akamai..kbps. <- as.numeric(gsub(",", "", data$Average.actual.speed..Akamai..kbps.))
@@ -120,7 +113,6 @@ Since we wanted to compare countries who adopted the open access policies agains
 ```{r}
 # countries that have not adopted open access policy: United States, Mexico, Slovak Republic
 non_open_countries <- subset(data, Country %in% c("United States", "Mexico", "Slovak Republic"))
-
 # countries that adopted open access policy
 open_countries <- subset(data, !(Country %in% c("United States", "Mexico", "Slovak Republic")))
 ```
@@ -165,12 +157,7 @@ As expected based on the summary stats, there was an increase in overall penetra
 To look into it a little deeper, we looked at the difference in values between 2007 and 2008.
 ```{r}
 Difference <- data$Penetration.per.100.OECD..2008 - data$Penetration.per.100.OECD..2007
-Difference
-```
-Interestingly enough, there is one country that experienced negative growth.
-```{r}
-cat("Country with negative growth:\n")
-cat(sprintf("%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Difference < 0)]))
+cat(sprintf("Country with negative growth:\n%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Difference < 0)]))
 ```
 The country Finland showed negative growth of .01 inhabitants per 100 inhabitants. However, all other OECD member countries saw growth in penetration per 100 inhabitants between 2007 and 2008. 
 
@@ -203,6 +190,20 @@ General growth appeared much lower than 3G growth, and there appears to be a sli
 cor(data[,c("Penetration_OECD_Growth","Growth.in.3G.penetration")],use = "complete.obs")
 ```
 
+
+Next, we are interested in looking at the difference between penetration per 100 inhabitants versus penetration by household. 
+```{r}
+# format the data
+pen2007 <- data.frame(group="2007", value=data$Penetration.per.100.OECD..2007)
+pen2008 <- data.frame(group="2008", value=data$Penetration.per.100.OECD..2008)
+pen <- rbind(pen2007, pen2008)
+
+# plot
+ggplot(pen,
+       aes(x=group, y=value)) + 
+       geom_boxplot() + 
+       labs(title="Penetration per 100 Inhabitants 2007-2008", x="", y="penetration per 100")
+```
 
 ## Price
 
@@ -710,7 +711,11 @@ There are many secondary effects we need to consider, given the lack of measurem
 
 For penetration, we do not know if the Household.penetration..OECD was measured in percentages or per 100 households. We assume it was per 100 households, but if it was in percentages, our outcomes based on this data are not accurate.
 
+<<<<<<< Updated upstream
 Most penetration metrics are measured on a per household/inhabitat basis. This insight brings to question whether or not the measurement of penetration has more to do with population density vs absolute coverage. Intuitively a more densely populated area is more advantageous for a broadband company to establish service because there is a higher number of users per infrastructure. The United States is an outlier in the data, while it has a Wifi_Hotspot_Per_100000 that is within one standard deviation of the mean, it has a Wifi_Hotspot metric that is nearly ten times the category mean. Because of the size of the United States it has a high number of Wifi Hotspots.
+=======
+Most penetration metrics is measured on a per household/inhabitat basis. This insight brings to question whether or not the measurement of penetration has more to do with population density vs absolute coverage. Intuitively a more densely populated area is more advantageous for a broadband company to establish service because there is a higher number of users per infrastructure. The United States is an outlier in the data, while it has a Wifi_Hotspot_Per_100000 that is within one standard deviation of the mean, it has a Wifi_Hotspot metric that is nearly ten times the category mean. Because of the size of the United States it has a high number of Wifi Hotspots.
+>>>>>>> Stashed changes
 
 For price, we are under the assumption that the price is based on the US dollar. We also assume that the price is converted from the country’s origin to US dollar; otherwise our analysis cannot be relied upon.
 
@@ -719,7 +724,6 @@ For speed, we decided to skip X90p..Download..speedtest.net..kbps., X90p..Upload
 Another important aspect to note is how the average actual speed is measured because we do not know for certain if the speed collected reflects 3G speed, WiFi speed, Fiber speed, etc. or all of the above. We also do not know if the average actual speed reflects the download, upload, and latency or just the download speed for example. Also, based on the column header’s name, we do not know how Akamai collect its speed data in comparison to speedtest.net. For this reason, we cannot be certain if the relationships reflected in the analysis are valid unless we are able to explore more on the dataset’s definition of average actual speed.
 
 We also removed outliers in our univariate analysis of speed because we are not certain if the values reflected are the actual or simply bolstered speed. Because we removed these outliers, if the outliers are indeed actual speed reflected in the country, our analysis will reflect speed that is much slower than actual.
-
 
 # Conclusion
 
