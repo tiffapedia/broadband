@@ -134,12 +134,12 @@ First, wanted to look at summary statistics to see how values vary in units and 
 ```{r}
 summary(data[, which(names(data)=="Penetration.per.100.OECD..2008"):which(names(data)=="Percent.of.population.in.urban.areas")])
 ```
-* Any column header with “per.100” reflects the number of business and residential lines in a country by the the population of per 100 inhabitants. It is interesting to note that X2G.and.3G.penetration.per.100..OECD have values over 100. We can assume that carriers of mobile devices can flow from one region of 100 inhabitants to another making the data more inflated than it actually is or 2G and 3G group counts a single individual twice if he/she had a mobile carrier that deliver both 2G and 3G, but further investigation is required for its cause.
-* Time of dataset may be an unspoken factor, since Penetration dataset includes information from 2008 and 2007.
+* Any column header with “per.100” reflects the number of business and residential lines per 100 inhabitants (in the population) for each country. It is interesting to note that X2G.and.3G.penetration.per.100..OECD have values over 100. We can assume that carriers of mobile devices can flow from one population bloc of 100 inhabitants to another making the data more inflated than it actually is or 2G and 3G group counts a single individual twice if he/she had a mobile carrier that delivers both 2G and 3G, but further investigation is required to determine the cause.
+* The date of variables in the dataset may be an unspoken factor, since the Penetration dataset includes information from 2008 and 2007.
 * Growth.in.3G.penetration and Percent.of.population.in.urban.areas are in percent units instead of per 100 inhabitants.
 * It is not clear whether Household.penetration..OECD are in percent units or in number per 100 inhabitants. We will assume that it is per 100 inhabitants.
 * Wi.Fi.hotspots..JiWire values have a much higher range than all other variables. Thus this number may reflect the total number of WiFi hotspots available in a given country, rather than per 100 inhabitants.
-* Penetration.per.100.OECD..2008 and Penetration.per.100.GC are close in distribution of values. We can assume that the two column are collected in the same year by different groups, but further clarification is necessary.
+* Penetration.per.100.OECD..2008 and Penetration.per.100.GC are close in distribution of values. We can assume that the two columns are collected in the same year by different groups, but further clarification is necessary.
 
 First, we wanted to look at the relationship between each of the Penetration variables.
 ```{r}
@@ -242,7 +242,7 @@ As can be observed, low and medium speed have an overall lower standard deviatio
 
 Presumably the evolution of high and very high speed networks are newer, and therefore not existent in every country, generating a missing (NA) data point in those countries where high/very high speed networks aren't available. From the summaries previously posted, we see that there are more missing data points the faster the speed is: from 1 missing data point in low speed to 11 missing data points in very high speed.
 
-It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't available could be enlightening. The reason why we chose very high speed is discussed earlier in the section; the two countries that do not have data point for high speed are Mexico and Turkey and they also do not have data point for very high speed.
+It could be argued that in the countries where very high speed internet isn't available, the network as a whole is newer and perhaps more costly. In order to explore this, analyzing the mean price for low to medium speeds where very high speed isn't available could be enlightening. The reason why we chose very high speed is discussed earlier in the section; the two countries that do not have data points for high speed are Mexico and Turkey and they also do not have data points for very high speed.
 
 ```{r}
 na_very_high_speed <- data[is.na(data$Price.for.very.high.speeds..combined),]
@@ -279,7 +279,7 @@ Visualizing the data by map can help to see that price for broadband can be cate
 
 ## Speed
 
-We can begin to look at the advertised speed and compare that to the actual speed. As shown in the boxplot below, the advertised speed appears to be significantly higher than the actual speed. Interesting to note is the claim advertisement seems to promise for its maximum advertised speed, going so far as having an outlier of 1,000,000 kbps. It appears to be outside the scope of what the actual speed can deliver. It comes to no surprise then the histogram of maximum advertised speed appears to be more positively skewed in comparison to the histogram of average actual speed. In general, the maximum advertised speed and the average advertised speed have a wider spread due to their respective standard deviation being larger than the average actual speed; it can be assumed that advertisements are not limited by actual hardware limitations in terms of claimed speed. 
+We can begin to look at the advertised speed and compare that to the actual speed. As shown in the boxplot below, the advertised speed appears to be significantly higher than the actual speed. Interesting to note is the claim advertisement seems to promise for its maximum advertised speed, going so far as having an outlier of 1,000,000 kbps. It appears to be outside the scope of what the actual speed can deliver. It comes as no surprise that the histogram for maximum advertised speed appears to be more positively skewed in comparison to the histogram for average actual speed. In general, the maximum advertised speed and the average advertised speed have a wider spread due to their respective standard deviation being larger than the average actual speed; it can be assumed that advertisements are not limited by actual hardware limitations in terms of claimed speed. 
 
 ```{r}
 # format the data
@@ -350,7 +350,7 @@ cat("\nStandard deviation of average actual speed without outliers: ",
     sd(avg_actual_speed_wo_outliers, na.rm=TRUE))
 ```
 
-What would be interesting to determine is to see if the advertised speed would be significantly higher in countries that do not adopt open source policies compared to countries that do. Although we have verified that outliers such as Japan and Korea have faster internet speed in general, we removed them while creating the boxplot for better visual clarity. What we have found out is that although countries that do not adopt open access policy do not appear to advertise internet speed higher than the other OECD countries, they do in general have a lower average actual speed. The data is not thoroughly conclusive as Slovak Republic do not have its actual average speed reported.  
+What would be interesting to determine is to see if the advertised speed would be significantly higher in countries that do not adopt open source policies compared to countries that do. Although we have verified that outliers such as Japan and Korea have faster internet speed in general, we removed them while creating the boxplot for better visual clarity. What we have found out is that although countries that do not adopt open access policy do not appear to advertise internet speed higher than the other OECD countries, they do in general have a lower average actual speed. The data is not thoroughly conclusive as Slovak Republic does not have its actual average speed reported.  
 
 ```{r}
 cat("Countries that adopt open access policy:\n")
@@ -410,7 +410,7 @@ grid.arrange(boxplot_o, boxplot_no, ncol=2, top="Comparing advertised vs actual 
 
 The mean of the average download speedtest is higher than the median download speedtest, which tells us that the download speed might be positively skewed. The same can be said for latency and upload speed. In this aspect, countries that adopt open access policy do not seem to differ from countries that do not adopt open access policy.
 
-We can roughly estimate that upload speed have more variability than latency which in turn have more variability than download speed, but without the full data to verify, this is just a rough estimate based on comparing the standard deviation to the mean. Again, in this aspect, countries that adopt open access policy do not seem to differ from countries that do not adopt open access policy.
+We can roughly estimate that upload speed have more variability than latency which in turn has more variability than download speed, but without the full data to verify, this is just a rough estimate based on comparing the standard deviation to the mean. Again, in this aspect, countries that adopt open access policy do not seem to differ from countries that do not adopt open access policy.
 
 ```{r}
 # Download
@@ -496,12 +496,67 @@ summary(open_countries$Standard.deviation.latency..speedtest.net)
 
 # Analysis of Key Relationships
 
-Network owners in US argues that adopting the open access policies will create a trade-off among price, speed, and penetration. For this reason, we will look into countries that do not adopt open access policies and see if the speed and penetration are reflectively better than countries that do not.
+Network owners in US argue that adopting open access policies will create a trade-off between price, speed, and penetration. For this reason, we will look at the countries that do not adopt open access policies and see if the speed and penetration are reflectively better than countries that do not.
 
-We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare it to the average actual speed (Average.actual.speed..Akamai..kbps.). Then, we will look at the relationship of penetration and  price for medium speed as well as speed and price for medium speed since the data for price for medium speed is most complete. (Price.for.med.speeds..combined).
+We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare them to the average actual speed (Average.actual.speed..Akamai..kbps) in addition to average and median upload speed(Average.upload.speedtest.net..kbps, Median.upload..speedtest.net..kbps), average and median download speed (Average.download.speedtest.net..kbps, Median.download.speedtest.net..kbps), and latency (Median.latency..speedtest.net).
+
+Then, we will look at the relationship of penetration and  price for medium speed as well as speed and price for medium speed since the data for price for medium speed is most complete. (Price.for.med.speeds..combined).
 
 ## Penetration and Speed
 Looking at Penetration vs. Speed we wanted to explore what impacts penetration had on speed and what relationships if any existed between the two. For the purposes of this bivariate analysis we looked at the most recent Penetration OECD data (2008). 
+
+We began by looking at correlation coefficients for penetration variables for: 100 inhabitants in 2008, household OECD, mobile 3G, and wifi hotpots and speed variabes for: average actual speed, average and median download speeds, average and median upload speeds, and latency.
+
+```{r}
+correlations <- c("Penetration.per.100.OECD..2008", "Household.penetration..OECD", "X3G.penetration.per.100", "Wi.Fi.hotspots..JiWire", "Average.actual.speed..Akamai..kbps.", "Average.download.speedtest.net..kbps.", "Median.download..speedtest.net..kbps.", "Average.upload.speedtest.net..kbps.", "Median.upload..speedtest.net..kbps.", "Average.latency.speedtest.net", "Median.latency..speedtest.net"  )
+
+pen_speed <- data[correlations]
+pen_speed_cor = cor(pen_speed, use= "complete.obs") 
+view1 = pen_speed_cor[c("Penetration.per.100.OECD..2008", "Household.penetration..OECD", "X3G.penetration.per.100", "Wi.Fi.hotspots..JiWire"),] 
+view1
+
+```
+
+Looking at the correlations table we see there are several correlation coefficients for speed and penetration variables that are greater than 0.5, an indication of a relatively strong positive relationship, namely household penetration and actual speed (0.61524195) , household penetration and average download speed (0.6341508) as well as median download speed(0.6041662), penetration and median download speed (0.504467). Most noteably correlations between household penetration and download speeds is greater than penetration per 100 inhabitants. This may be because the household penetration includes businesses (and reflected a higher distribution relative to penetration per 100 inhabitants).   
+
+There are also relatively moderate (between 0.3 and 0.5) positive correlations for penetration (per inhabitants and household) and average and median upload speeds. The only negative correlations between our selected penetration variables and speed variables is for latency (or lag). Interestingly higher penetration correlates with lower latency.
+
+```{r}
+
+g1 <- ggplot(data, 
+             aes(x=Penetration.per.100.OECD..2008, y=Median.download..speedtest.net..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) + 
+      labs(title="Penetration vs Download Speed", 
+           x="penetration per 100 inhabitants", 
+           y="median download speed (kbps)")
+g2 <- ggplot(data, 
+             aes(x=Penetration.per.100.OECD..2008, y=Median.upload..speedtest.net..kbps., label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="Penetration vs Upload Speed", 
+            x="penetration per 100 inhabitants", 
+           y="median upload speed (kbps)")
+g3 <- ggplot(data, 
+             aes(x=Penetration.per.100.OECD..2008, y=Median.latency..speedtest.net, label=Country.Code)) +
+      geom_point(data=open_countries) +
+      geom_point(data=non_open_countries, color="red") + 
+      geom_smooth() + 
+      geom_text(data=non_open_countries, hjust=-1, vjust=1) +
+      labs(title="Penetration vs Lag", 
+           x="penetration per 100 inhabitants", 
+           y="median latency (kbps)")
+  
+grid.arrange(g1, g2, g3, ncol=2, top="Bivariate analysis of penetration and speed variables")
+
+
+```
+
+We might deduce from these correlations a general trend for penetration and speed that reflects countries with relatively higher penetration also having relatively higher internet speeds in all benchmarks (downloads, uploads, latency, and actual speed tests) with few outliers. Whether this is a feature of open-access policies remains to be seen. 
 
 ```{r}
 g1 <- ggplot(data, 
@@ -655,7 +710,7 @@ There are many secondary effects we need to consider, given the lack of measurem
 
 For penetration, we do not know if the Household.penetration..OECD was measured in percentages or per 100 households. We assume it was per 100 households, but if it was in percentages, our outcomes based on this data are not accurate.
 
-Most penetration metrics is measured on a per household/inhabitat basis. This insight brings to question whether or not the measurement of penetration has more to do with population density vs absolute coverage. Intuitively a more densely populated area is more advantageous for a broadband company to establish service because there is a higher number of users per infrastructure. The United States is an outlier in the data, while it has a Wifi_Hotspot_Per_100000 that is within one standard deviation of the mean, it has a Wifi_Hotspot metric that is nearly ten times the category mean. Because of the size of the United States it has a high number of Wifi Hotspots.
+Most penetration metrics are measured on a per household/inhabitat basis. This insight brings to question whether or not the measurement of penetration has more to do with population density vs absolute coverage. Intuitively a more densely populated area is more advantageous for a broadband company to establish service because there is a higher number of users per infrastructure. The United States is an outlier in the data, while it has a Wifi_Hotspot_Per_100000 that is within one standard deviation of the mean, it has a Wifi_Hotspot metric that is nearly ten times the category mean. Because of the size of the United States it has a high number of Wifi Hotspots.
 
 For price, we are under the assumption that the price is based on the US dollar. We also assume that the price is converted from the country’s origin to US dollar; otherwise our analysis cannot be relied upon.
 
@@ -669,5 +724,7 @@ We also removed outliers in our univariate analysis of speed because we are not 
 # Conclusion
 
 In summary, the key relationships that we observed from our exploratory analysis were a positive correlation between a country's penetration variables and average actual speed offered and a negative correlation with price for medium speed.
+
+As expected, higher speeds corresponded to higher price. Greater penetration also reflected higher actual speeds in addition to higher tested download and upload speeds.
 
 Comparing countries who have adopted an open access policy to those who have not, in 82% of the categories measured in the dataset, the Open Access countries had a superior mean. Superior is interpreted to be high speed, larger penetration and smaller price variables. As previously mentioned, conclusive analysis cannot be carried out due to the limited size of the Non-Open Access dataset. However, from the analysis performed, Open Access Countries appear to provide superior Broadband metrics to their citizens. 
