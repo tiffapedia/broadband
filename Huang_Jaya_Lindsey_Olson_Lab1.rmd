@@ -206,24 +206,13 @@ ggplot(pen,
 ```
 
 ## Price
-
+The price data is broken up by speed levels (low, medium, high and very high). 
 ```{r}
 price_data <- data[, c("Price.for.low.speeds..combined", "Price.for.med.speeds..combined", "Price.for.high.speeds..combined", "Price.for.very.high.speeds..combined")]
 summary(price_data)
 ```
 
-Using the summary function, we can see that price seems to increase with increased speed. A boxplot will help to better visualize this. 
-
-```{r}
-boxplot(price_data,
-        las=1, # all axis labels horizontal
-        names=c("low", "medium", "high", "very high"),
-        main="Comparing price for different speeds",
-        xlab="Speed",
-        ylab="Price")
-```
-
-What is noticed from the boxplot visualization is that the lower speeds tend to have a smaller standard deviation or spread. 
+Using the summary function, we can see that price seems to increase with increased speed. Analysis of the summary data shows that there appears to be a broader range for higher speed price categoreis. 
 
 ```{r}
 # standard deviation for low speed
@@ -268,7 +257,44 @@ sprintf("Is the high speed mean of the filtered dataset (%s) greater than the av
 
 From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average for that class. 
 
-### TODO: check the map and include the outliers, skewness, and kurtosis
+```{r}
+
+hist(Broadband$Price_MedSpeed,
+     main = "Histogram of the Medium Speed Price Variable",
+     xlab = "Price (Medium Speed Tier)",
+     col = 'gray',
+     prob = T)
+lines(density(Broadband$Price_MedSpeed, na.rm = TRUE), col = 'blue')
+``
+The histogram above displays the medium speed price variable. As can be observed there is a large tail associated with higher prices. Additionally, there is a large number of countries who have prices near the mean (41.45). 
+
+A positive value for skewness can be interpreted that there is a tail on the right side with respect to the Medium Speed Price Variable (a number of countries have dispraportionally high prices compared to the median forcing the mean to be higher). The kurtosis variable is positive meaning that it is leptokuric meaning that there is a high peak and fat tails.
+
+```{r}
+#Low Speed Variables
+skewness(Broadband$Price_LowSpeed, na.rm = TRUE)
+kurtosis(Broadband$Price_LowSpeed, na.rm = TRUE)
+#Medium Speed Variables
+skewness(Broadband$Price_MedSpeed, na.rm = TRUE)
+kurtosis(Broadband$Price_MedSpeed, na.rm = TRUE)
+#High Speed Variables
+skewness(Broadband$Price_HighSpeed, na.rm = TRUE)
+kurtosis(Broadband$Price_HighSpeed, na.rm = TRUE)
+#Very High Speed Variables
+skewness(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
+kurtosis(Broadband$Price_VeryHighSpeed, na.rm = TRUE)
+```
+The three lower speed tiers have similar skewness and kurtosis trends. In the Very-High-Speed category, which has a larger number of NA variables, we see that the skewness measurement is closer to zero (or distribution has more symmetry). Also the kurtosis number is smaller. While the very High Speed Price variable is still 'fat-tailed' it more-so resembles a normal distribution in comparison to the other price variables. 
+
+```{r}
+hist(Broadband$Price_VeryHighSpeed,
+     main = "Histogram of the Medium Speed Price Variable",
+     xlab = "Price (Very High Speed Tier)",
+     col = 'gray',
+     prob = T)
+lines(density(Broadband$Price_VeryHighSpeed, na.rm = TRUE), col = 'blue')
+```
+The variance in distribution may be caused by the fact that there are fewer data points in the Very High Speed Category.
 
 ```{r}
 #mapDevice()
@@ -682,6 +708,19 @@ When comparing the correlation between the Penetration variables and Price for M
 
 ## Speed and Price
 
+Intuitivly higher price should correlate with higher speed. We set out to explore this relationship. 
+
+```{r}
+boxplot(price_data,
+        las=1, # all axis labels horizontal
+        names=c("low", "medium", "high", "very high"),
+        main="Comparing price for different speeds",
+        xlab="Speed",
+        ylab="Price")
+```
+
+From the boxplot, analysis of the means shows that higher prices correlate with higher speed. As mentioned in univariate analysis, the two higher speed categories have a larger range of prices when compared to the low speed price data. 
+
 ```{r}
 ggplot(data, 
        aes(x=Average.actual.speed..Akamai..kbps., y=Price.for.med.speeds..combined, label=Country.Code)) +
@@ -694,16 +733,18 @@ labs(title="Bivariate analysis of average actual speed and price for medium spee
      y="price for medium speed ($, assuming)")
 ```
 
+The price variables within the dataset are associated with a speed category (low, medium, high and very high). The scatterplot above displays the actual speed vs medium-speed price variable. In general, higher speeds correlate with a lower price. Intuitively this is the opposite of what is to be expected and what was discovered in the boxplot (high speed correlates with highe price). However the scatterplot only uses one price category (medium) and compares over the actual speed dataset. The dataset provided did not clearly state how many kbps were considered in each of the price categories. This makes copmaring speed vs price more complicated as the specific speed within the "medium speed price" level per country is not given. 
+
 ```{r}
 with(data, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
-
-with(open_countries, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
-
-with(non_open_countries, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 
 sum(is.na(non_open_countries$Average.actual.speed..Akamai..kbps.))
 sum(is.na(non_open_countries$Price.for.med.speeds..combined))
 ```
+There is a weak negative correlation between the medium speed price and speed. One interpretation in order to explain the negative correlation, is that more established broadband networks offer higher speeds, and competition within the country drives down the price. This hypothesis is supported by the negative correlation from before between price and penetration. Further analysis would require the explicit speed within the various price categories. 
+
+From the boxplot analysis, higher price correlates with higher speed. While the scatterplot appears to contradict these findings, because explicit speed per price category was not given, the analysis can not be completed. 
+
 
 # Analysis of Secondary Effects
 
