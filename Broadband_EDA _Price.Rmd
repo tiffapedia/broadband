@@ -38,7 +38,6 @@ library(rworldmap)
 Using only descriptive statistics (no inference), investigate the three-way relationship between price, speed, and penetration.  Does a trade-off exist between these concepts?  Secondarily, consider whether there is evidence for the beneficial effects of open access policies.
 
 ```{r}
-setwd("D:/Documents/UC Berkeley MIDS/W203 Statistics/Lab 1/Lab_1/Broadband_EDA")
 #Import and Process Price CSV File
 Price = read.csv("Price.csv")
 colnames(Price)
