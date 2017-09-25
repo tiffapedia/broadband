@@ -2,6 +2,8 @@
 title: "Broadband Exploration"
 author: "Joanna Huang, Tiffany Jaya, David Lindsey, Aaron Olson"
 output: pdf_document
+fontsize: 10pt
+geometry: margin=1.5cm
 ---
 
 # Introduction
@@ -15,6 +17,7 @@ We combine the three datasets by performing an inner join on country's name and 
 
 ```{r global_options, include=FALSE}
 library(knitr)
+knitr::opts_chunk$set(fig.width=10, fig.height=6) 
 opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
@@ -25,6 +28,7 @@ library(moments)
 library(gridExtra)
 library(rworldmap)
 library(ggplot2)
+library(reshape2)
 
 # load the datasets
 penetration <- read.csv('Penetration.csv')
@@ -128,7 +132,6 @@ plot(data[,which(names(data)=="Penetration.per.100.OECD..2008"):which(names(data
 ```
 The scatterplot matrix provides us insight that there is a positive relationship between Penetration.per.100.OECD..2008, Penetration.per.100.OECD..2007, Penetration.per.100.GC and Household.penetration..OECD. This plot suggests that these variables are closely related, which makes sense because they measure the penetration of businesses and residentials at a given period of time. 
 
-We decided to look at the change of Penetration from 2007 to 2008 to see if there is penetration growth over the year. What we have found is that there was an increase in overall penetration. The only country that showed negative growth is Finland. 
 ```{r message=FALSE}
 # format the data
 pen2007 <- data.frame(group="2007", value=data$Penetration.per.100.OECD..2007)
@@ -144,8 +147,9 @@ ggplot(pen, aes(x=group, y=value)) +
 Difference <- data$Penetration.per.100.OECD..2008 - data$Penetration.per.100.OECD..2007
 cat(sprintf("Country with negative growth:\n%s: %g\n", data$Country[which(Difference < 0)], Difference[which(Difference < 0)]))
 ```
+We decided to look at the change of Penetration from 2007 to 2008 to see if there is penetration growth over the year. What we have found is that there was an increase in overall penetration. The only country that showed negative growth is Finland. 
 
-Next, we would like to compare the different types of penetration, assuming that Household.penetration..OECD reflects wired connections, X2G.and.3G.penetration.per.100..OECD and X3G.penetration.per.100 reflect mobile connections, and Wi.Fi.hotspots.per.100.000..JiWire reflect wireless connections. The graph below seems to reflect that mobile devices have a higher penetration followed by wired and wireless connection respectively, assuming that household values only take into consideration wired connection. We assume mobile penetration would have been higher since it does not include 4G connections and beyond.  
+
 ```{r message=FALSE}
 # format the data
 wired <-data.frame(group="wired",value=data$Household.penetration..OECD)
@@ -158,8 +162,7 @@ ggplot(pen_types,aes(x=group, y=value)) +
   geom_boxplot() + 
   labs(title="Penetration by type", x="", y="penetration per 100")
 ```
-
-To verify whether there is an increased growth rate in mobile penetration, we would compare the growth rate of penetration from 2007 to 2008 and the growth rate of 3G assuming it was also done in 2007 to 2008. From the graph below, the growth rate of 3G appears to be faster but we cannot draw any conclusions since we do not know when Growth.in.3G.penetration data are collected.
+Next, we would like to compare the different types of penetration, assuming that Household.penetration..OECD reflects wired connections, X2G.and.3G.penetration.per.100..OECD and X3G.penetration.per.100 reflect mobile connections, and Wi.Fi.hotspots.per.100.000..JiWire reflect wireless connections. The graph below seems to reflect that mobile devices have a higher penetration followed by wired and wireless connection respectively, assuming that household values only take into consideration wired connection. We assume mobile penetration would have been higher since it does not include 4G connections and beyond.  
 
 ```{r message=FALSE}
 data$Penetration_OECD_Growth <- (Difference/data$Penetration.per.100.OECD..2007)*100
@@ -171,6 +174,28 @@ ggplot(pen_growth,aes(x=group, y=value)) +
   geom_boxplot() +
   labs(title="Penetration growth", x="", y="Percent")
 ```
+To verify whether there is an increased growth rate in mobile penetration, we would compare the growth rate of penetration from 2007 to 2008 and the growth rate of 3G assuming it was also done in 2007 to 2008. From the graph below, the growth rate of 3G appears to be faster but we cannot draw any conclusions since we do not know when Growth.in.3G.penetration data are collected.
+
+```{r}
+o <- data.frame(group="open access", value=open_countries$Penetration.per.100.OECD..2008)
+no <- data.frame(group="non-open access", value=non_open_countries$Penetration.per.100.OECD..2008)
+r1 <- rbind(o, no)
+g1 <- ggplot(r1, aes(x=group, y=value)) + geom_boxplot() + labs(title="Penetration in 2008", x="", y="penetration per 100")
+o <- data.frame(group="open access", value=open_countries$Household.penetration..OECD)
+no <- data.frame(group="non-open access", value=non_open_countries$Household.penetration..OECD)
+r2 <- rbind(o, no)
+g2 <- ggplot(r2, aes(x=group, y=value)) + geom_boxplot() + labs(title="Household Penetration", x="", y="penetration per 100")
+o <- data.frame(group="open access", value=open_countries$X3G.penetration.per.100)
+no <- data.frame(group="non-open access", value=non_open_countries$X3G.penetration.per.100)
+r3 <- rbind(o, no)
+g3 <- ggplot(r3, aes(x=group, y=value)) + geom_boxplot() + labs(title="3G Penetration", x="", y="penetration per 100")
+o <- data.frame(group="open access", value=open_countries$Wi.Fi.hotspots.per.100.000..JiWire)
+no <- data.frame(group="non-open access", value=non_open_countries$Wi.Fi.hotspots.per.100.000..JiWire)
+r4 <- rbind(o, no)
+g4 <- ggplot(r4, aes(x=group, y=value)) + geom_boxplot() + labs(title="WiFi Hotspots Penetration", x="", y="penetration per 100")
+grid.arrange(g1, g2, g3, g4, ncol=2, top="Comparing penetration for open access vs non-open access countries")
+```
+Non-open access countries appears to have a lower penetration in general as demonstrated from the visualization, but we cannot make this statement conclusively as we have only 27 datasets to work with for Open Access countries and 3 datasets to work with for Non-Open Access Countries. 
 
 ### Consideration for lack of measurement details 
 Given the lack of measurement details for the dataset, we do not know if the Household.penetration..OECD was measured in percentages or per 100 households. We assume it was per 100 households, but if it was in percentages, our outcomes based on this data are not accurate.
@@ -231,15 +256,15 @@ sprintf("Is the high speed mean of the filtered dataset (%s) greater than the av
 ```
 
 From our analysis, all instances where Very High Speed internet isn't available, the average price of the three other tiers is higher than the overall average price for that class. 
-
-The histogram of the price for medium speed (as well as low speed which we will not present here), reflects the positive skewness; there are more countries that will charge higher than the average for medium speed. 
+. 
 ```{r}
 hist(data$Price.for.med.speeds..combined, main="Price for medium speed", xlab="price ($)")
 skewness(data$Price.for.med.speeds..combined)
 ```
 
+The histogram of the price for medium speed (as well as low speed which we will not present here), reflects the positive skewness; there are more countries that will charge higher than the average for medium speed
 
-```{r message=FALSE}
+```{r}
 mapDevice()
 spdf <- joinCountryData2Map(data, joinCode = "NAME", nameJoinColumn = "Country")
 mapParams <- mapCountryData(spdf, nameColumnToPlot = "Price.for.med.speeds..combined", catMethod = "logFixedWidth", colourPalette = "topo")
@@ -248,12 +273,32 @@ do.call(addMapLegend, c(mapParams))
 
 Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
 
+```{r}
+o <- data.frame(group="open access", value=open_countries$Price.for.low.speeds..combined)
+no <- data.frame(group="non-open access", value=non_open_countries$Price.for.low.speeds..combined)
+r1 <- rbind(o, no)
+g1 <- ggplot(r1, aes(x=group, y=value)) + geom_boxplot() + labs(title="Low Speed", x="", y="Price ($)")
+o <- data.frame(group="open access", value=open_countries$Price.for.med.speeds..combined)
+no <- data.frame(group="non-open access", value=non_open_countries$Price.for.med.speeds..combined)
+r2 <- rbind(o, no)
+g2 <- ggplot(r2, aes(x=group, y=value)) + geom_boxplot() + labs(title="Medium Speed", x="", y="Price($)")
+o <- data.frame(group="open access", value=open_countries$Price.for.high.speeds..combined)
+no <- data.frame(group="non-open access", value=non_open_countries$Price.for.high.speeds..combined)
+r3 <- rbind(o, no)
+g3 <- ggplot(r3, aes(x=group, y=value)) + geom_boxplot() + labs(title="High Speed", x="", y="Price($)")
+o <- data.frame(group="open access", value=open_countries$Price.for.very.high.speeds..combined)
+no <- data.frame(group="non-open access", value=non_open_countries$Price.for.very.high.speeds..combined)
+r4 <- rbind(o, no)
+g4 <- ggplot(r4, aes(x=group, y=value)) + geom_boxplot() + labs(title="Very High Speed", x="", y="penetration per 100")
+grid.arrange(g1, g2, g3, g4, ncol=2, top="Comparing price for open access vs non-open access countries")
+```
+
+The graph demonstrates that Non-Open Access countries tend to price their network speed higher in particular with increasing speed. Again, we cannot conclusively state this due to the limited amount of data. 
+
 ### Consideration for lack of measurement details 
 Given the lack of measurement details for the dataset, we are under the assumption that the price is based on the US dollar. We also assume that the price is converted from the country’s origin to US dollar; otherwise our analysis cannot be relied upon.
 
 ## Speed
-
-We can begin to look at the advertised speed and compare that to the actual speed. As shown in the boxplot below, the advertised speed appears to be significantly higher than the actual speed. Interesting to note is the claim advertisement seems to promise for its maximum advertised speed, going so far as having an outlier of 1,000,000 kbps. It appears to be outside the scope of what the actual speed can deliver. It comes as no surprise that the histogram for maximum advertised speed appears to be more positively skewed in comparison to the histogram for average actual speed. In general, the maximum advertised speed and the average advertised speed have a wider spread due to their respective standard deviation being larger than the average actual speed; it can be assumed that advertisements are not limited by actual hardware limitations in terms of claimed speed. 
 
 ```{r message=FALSE}
 # format the data
@@ -302,6 +347,8 @@ act_h <- ggplot(data=data,
          labs(title="avg actual", x="")
 grid.arrange(max_h, avg_h, act_h, ncol=3, top="Histograms of advertised vs actual speed")
 ```
+
+We can begin to look at the advertised speed and compare that to the actual speed. As shown in the boxplot above, the advertised speed appears to be significantly higher than the actual speed. Most countries’ max advertised and average advertised speeds seem to be between 0-25000 kbps, whereas the actual speed 0-8000 kbps. Interesting to note is the claim advertisement seems to promise for its maximum advertised speed, going so far as having an outlier of 1,000,000 kbps. It appears to be outside the scope of what the actual speed can deliver. It comes as no surprise that the histogram for maximum advertised speed appears to be more positively skewed. In general, the maximum advertised speed and the average advertised speed have a wider spread due to their respective standard deviation being larger than the average actual speed; it can be assumed that advertisements are not limited by actual hardware limitations in terms of claimed speed. 
 
 What would be interesting to determine is to see if the advertised speed would be significantly higher in countries that do not adopt open source policies compared to countries that do. Although we have verified that outliers such as Japan and Korea have faster internet speed in general, we removed them while creating the boxplot for better visual clarity. What we have found out is that although countries that do not adopt open access policy do not appear to advertise internet speed higher than the other OECD countries, they do in general have a lower average actual speed. The data is not thoroughly conclusive as Slovak Republic does not have its actual average speed reported.  
 
@@ -371,7 +418,7 @@ We also removed outliers in our univariate analysis of speed because we are not 
 
 # Analysis of Key Relationships
 
-Network owners in US argue that adopting open access policies will create a trade-off between price, speed, and penetration. For this reason, we will look at the countries that do not adopt open access policies and see if the speed and penetration are reflectively better than countries that do not.
+Network owners in US argue that adopting open access policies will create a trade-off between price, speed, and penetration. For this reason, we will look at the countries that do not adopt open access policies and see how the speed and penetration compare to countries that do have open access policies.
 
 We will look into the most recent penetration data Penetration.per.100.OECD..2008, which reflects both businesses and residences before diving in to penetration data in household (Household.penetration..OECD), in mobile 3G (X3G.penetration.per.100), and in WiFi hotspots (Wi.Fi.hotspots.per.100.000..JiWire). We will compare them to the average actual speed (Average.actual.speed..Akamai..kbps) in addition to average and median upload speed(Average.upload.speedtest.net..kbps, Median.upload..speedtest.net..kbps), average and median download speed (Average.download.speedtest.net..kbps, Median.download.speedtest.net..kbps), and latency (Median.latency..speedtest.net).
 
@@ -382,17 +429,7 @@ Looking at Penetration vs. Speed we wanted to explore what impacts penetration h
 
 We began by looking at correlation coefficients for penetration variables for: 100 inhabitants in 2008, household OECD, mobile 3G, and wifi hotpots and speed variabes for: average actual speed, average and median download speeds, average and median upload speeds, and latency.
 
-```{r message=FALSE}
-correlations <- c("Penetration.per.100.OECD..2008", "Household.penetration..OECD", "X3G.penetration.per.100", "Wi.Fi.hotspots..JiWire", "Average.actual.speed..Akamai..kbps.", "Average.download.speedtest.net..kbps.", "Median.download..speedtest.net..kbps.", "Average.upload.speedtest.net..kbps.", "Median.upload..speedtest.net..kbps.", "Average.latency.speedtest.net", "Median.latency..speedtest.net"  )
-
-pen_speed <- data[correlations]
-pen_speed_cor = cor(pen_speed, use= "complete.obs") 
-view1 = pen_speed_cor[c("Penetration.per.100.OECD..2008", "Household.penetration..OECD", "X3G.penetration.per.100", "Wi.Fi.hotspots..JiWire"),] 
-view1
-
-```
-
-Looking at the correlations table we see there are several correlation coefficients for speed and penetration variables that are greater than 0.5, an indication of a relatively strong positive relationship, namely household penetration and actual speed (0.61524195) , household penetration and average download speed (0.6341508) as well as median download speed(0.6041662), penetration and median download speed (0.504467). Most noteably correlations between household penetration and download speeds is greater than penetration per 100 inhabitants. This may be because the household penetration includes businesses (and reflected a higher distribution relative to penetration per 100 inhabitants).   
+We there are several correlation coefficients for speed and penetration variables that are greater than 0.5, an indication of a relatively strong positive relationship, namely household penetration and actual speed (0.61524195) , household penetration and average download speed (0.6341508) as well as median download speed(0.6041662), penetration and median download speed (0.504467). Most noteably correlations between household penetration and download speeds is greater than penetration per 100 inhabitants. This may be because the household penetration includes businesses (and reflected a higher distribution relative to penetration per 100 inhabitants).   
 
 There are also relatively moderate (between 0.3 and 0.5) positive correlations for penetration (per inhabitants and household) and average and median upload speeds. The only negative correlations between our selected penetration variables and speed variables is for latency (or lag). Interestingly higher penetration correlates with lower latency.
 
@@ -470,12 +507,7 @@ g3 <- ggplot(data,
            y="median latency (kbps)")
   
 grid.arrange(g1, g2, g3, ncol=2, top="Bivariate analysis of penetration and speed variables")
-
-
 ```
-
-We might deduce from these correlations a general trend for penetration and speed that reflects countries with relatively higher penetration also having relatively higher internet speeds in all benchmarks (downloads, uploads, latency, and actual speed tests) with few outliers. Whether this is a feature of open-access policies remains to be seen. 
-
 ```{r message=FALSE}
 g1 <- ggplot(data, 
              aes(x=Penetration.per.100.OECD..2008, y=Average.actual.speed..Akamai..kbps., label=Country.Code)) +
@@ -525,9 +557,7 @@ with(data, cor(Household.penetration..OECD, Average.actual.speed..Akamai..kbps.,
 with(data, cor(X3G.penetration.per.100, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 with(data, cor(Wi.Fi.hotspots.per.100.000..JiWire, Average.actual.speed..Akamai..kbps., use="pairwise.complete.obs"))
 ```
-Overall, there appears to be a positive correlation between Penetration.per.100.OECD..2008, House- hold.penetration..OECD, X3G.penetration.per.100 and Wi.Fi.hotspots.per.100.000 and speed, with the correlation being highest between Household Penetration and Average actual speed.
-
-In conclusion, countries with higher penetration also have relatively higher internet speeds and lower latency in general. Since we have two to three datasets to work with for Non Open-Access countries, we cannot conclude whether or not open access policies enables higher penetration and faster speed. US appears to be on the average in terms of penetration and speed while Mexico and Slovak Republic seem to be trailing behind in terms of both. 
+Overall, there appears to be a positive correlation between penetration per 100 inhabitants, house-hold penetration, 3G penetration per 100 inhabitants and wifi hotspots per 100,00 inhabitants and speed, with the correlation being highest between household penetration and average actual speed. In conclusion, countries with higher penetration also have relatively higher internet speeds and lower latencyin general. Since we have two to three datasets to work with for Non Open-Access countries, we cannot conclude whether or not open access policies enables higher penetration and faster speed. US appears to22be on the average in terms of penetration and speed while Mexico and Slovak Republic seem to be trailing behind in terms of both.
 
 ## Penetration and Price
 
@@ -595,22 +625,13 @@ with(non_open_countries, cor(X3G.penetration.per.100, Price.for.med.speeds..comb
 with(non_open_countries, cor(Wi.Fi.hotspots.per.100.000..JiWire, Price.for.med.speeds..combined, use="pairwise.complete.obs"))
 
 ```
-When comparing the correlation between the Penetration variables and Price for Medium Speeds for Open-Access and Non Open-Access countries, there seems to be a higher negative correlation for Non-Open Access countries. However, these results may be due to the limited dataset, 
+When comparing the correlation between the Penetration variables and Price for Medium Speeds for Open-Access and Non-Open Access countries, there seems to be a higher negative correlation for Non-Open Access countries. However, these results may be due to the limited dataset. 
+
+In conclusion, the higher the penetration the more affordable the price specifically for medium speed. Again, we cannot conclude with just three datasets whether or not Non-Open Access countries offer better price at a higher penetration.
 
 ## Speed and Price
 
-Intuitively higher price should correlate with higher speed. We set out to explore this relationship. 
-
-```{r}
-boxplot(price_data,
-        las=1, # all axis labels horizontal
-        names=c("low", "medium", "high", "very high"),
-        main="Comparing price for different speeds",
-        xlab="Speed",
-        ylab="Price")
-```
-
-From the boxplot, analysis of the means shows that higher prices correlate with higher speed. As mentioned in univariate analysis, the two higher speed categories have a larger range of prices when compared to the low speed price data. 
+As mentioned in univariate analysis, higher prices correlate with higher speed, and the two higher speed categories have a larger range of prices when compared to the low speed price data. 
 
 ```{r message=FALSE}
 ggplot(data, 
@@ -624,7 +645,7 @@ labs(title="Bivariate analysis of average actual speed and price for medium spee
      y="price for medium speed ($, assuming)")
 ```
 
-The price variables within the dataset are associated with a speed category (low, medium, high and very high). The scatterplot above displays the actual speed vs medium-speed price variable. In general, higher speeds correlate with a lower price. Intuitively this is the opposite of what is to be expected and what was discovered in the boxplot (high speed correlates with highe price). However the scatterplot only uses one price category (medium) and compares over the actual speed dataset. The dataset provided did not clearly state how many kbps were considered in each of the price categories. This makes copmaring speed vs price more complicated as the specific speed within the "medium speed price" level per country is not given. 
+The price variables within the dataset are associated with a speed category (low, medium, high and very high). The scatterplot above displays the actual speed vs medium-speed price variable. It appears that higher speeds tend to have lower price. Intuitively, this is the opposite of what is to be expected (higher speed correlates with higher price). However the scatterplot only uses one price category (medium) and compares over the actual speed dataset. The dataset provided did not clearly state how many kbps were considered in each of the price categories. This makes copmaring speed vs price more complicated as the specific speed within the "medium speed price" level per country is not given. 
 
 ```{r message=FALSE}
 with(data, cor(Average.actual.speed..Akamai..kbps., Price.for.med.speeds..combined, use="pairwise.complete.obs"))
@@ -646,8 +667,14 @@ Additionally, monopolization may have affected the relationships we identified. 
 
 # Conclusion
 
-In summary, the key relationships that we observed from our exploratory analysis were a positive correlation between a country's penetration variables and average actual speed offered and a negative correlation with price for medium speed.
+We have learned that most of the countries surveyed in this dataset have a relatively increased penetration from the year 2007 to 2008. Mobile connection has a relatively higher penetration and growth rate than other network connection. 
 
-As expected, higher speeds corresponded to higher price. Greater penetration also reflected higher actual speeds in addition to higher tested download and upload speeds.
+Higher price seems to correlate with higher speed. More countries tend to not implement the high or very high infrastructure. If the higher speed is not implemented, the lower speed tends to be priced at a higher than average price. Speed tends to be advertised higher than the actual speed, which is to be expected. 
 
-Comparing countries who have adopted an open access policy to those who have not, in 82% of the categories measured in the dataset, the Open Access countries had a superior mean. Superior is interpreted to be high speed, larger penetration and smaller price variables. As previously mentioned, conclusive analysis cannot be carried out due to the limited size of the Non-Open Access dataset. However, from the analysis performed, Open Access Countries appear to provide superior Broadband metrics to their citizens. 
+It appears that penetration is lower in Non-Open Access countries priced at a relatively higher price and lower speed. But we cannot make a conclusive statement based on this data that open access policy provides customers with better service with higher penetration and speed at a lower price because there are only three Non-Open Access countries. 
+
+In conclusion, countries with higher penetration seem to have relatively higher internet speeds in all benchmarks (downloads, uploads, actual speed tests) and lower latency. Additionally, there appears to be a negative relationship between overall penetration and price for medium speed. In regards to speed and price, however, the relationship is unclear. When comparing medium speed price and speed, there is a negative correlation that may be explained by infrastructural differences that may allow more established broadband networks to offer higher speeds at lower prices. However, when looking at speed and price at the respective levels, price seems to increase with speed. Further information on the explicit speeds per low, medium, high and very high categories could help clarify this contradiction.
+
+When looking at the effects of open access versus non open-access policies, we must view the conclusions with caution as the outcomes are based on data from 2-3 countries, namely Mexico, Slovak Rep. and the U.S. With this in mind, we did find that in 82% of the categoriesmeasured in the dataset, the Open Access countries had a superior mean. Superior is interpreted to be high speed, larger penetration and smaller price variables. Thus, from the analysis performed, Open Access Countries appear to provide superior Broadband metrics to their citizens.
+
+
