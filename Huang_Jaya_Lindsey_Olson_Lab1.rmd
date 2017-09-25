@@ -242,7 +242,8 @@ skewness(data$Price.for.med.speeds..combined)
 ```{r message=FALSE}
 mapDevice()
 spdf <- joinCountryData2Map(data, joinCode = "NAME", nameJoinColumn = "Country")
-mapCountryData(spdf, nameColumnToPlot = "Price.for.med.speeds..combined", catMethod = "logFixedWidth", colourPalette = "topo")
+mapParams <- mapCountryData(spdf, nameColumnToPlot = "Price.for.med.speeds..combined", catMethod = "logFixedWidth", colourPalette = "topo")
+do.call(addMapLegend, c(mapParams))
 ```
 
 Visualizing the data by map can help to see that price for broadband can be categorized by region. The majority of European countries have low cost Broadband service, with a few outliers. North America also appears on the lower end in terms of cost. Australia and the pacific have the highest price by region. 
